@@ -8,6 +8,10 @@ const palette = {
   measurement: "#9391a2",
   iir: "#f9b86b",
   sma: "#7bbfac",
+  grid: "#332c3c",
+  muted: "#b4aabb",
+  border: "#63556f",
+  background: "#17131d",
 };
 const visible = {
   truth: true,
@@ -165,7 +169,7 @@ function plot() {
     const hh = bounds.hmin + ((bounds.hmax - bounds.hmin) * i) / 5,
       vv = bounds.vmin + ((bounds.vmax - bounds.vmin) * i) / 5;
     const [vx, hy] = pos([hh, vv]);
-    ctx.strokeStyle = "#332c3c";
+    ctx.strokeStyle = palette.grid;
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(left, hy);
@@ -173,13 +177,13 @@ function plot() {
     ctx.moveTo(vx, top);
     ctx.lineTo(vx, h - bottom);
     ctx.stroke();
-    ctx.fillStyle = "#b4aabb";
+    ctx.fillStyle = palette.muted;
     ctx.textAlign = "right";
     ctx.fillText(hh.toFixed(1), left - 9, hy);
     ctx.textAlign = "center";
     ctx.fillText(vv.toFixed(1), vx, h - bottom + 17);
   }
-  ctx.strokeStyle = "#63556f";
+  ctx.strokeStyle = palette.border;
   ctx.strokeRect(left, top, pw, ph);
   ctx.fillStyle = palette.truth;
   ctx.textAlign = "center";
@@ -210,7 +214,7 @@ function plot() {
   }
   function marker(x, color, shape) {
     const [a, b] = pos(x);
-    ctx.fillStyle = "#17131d";
+    ctx.fillStyle = palette.background;
     ctx.strokeStyle = color;
     ctx.lineWidth = 2;
     ctx.beginPath();

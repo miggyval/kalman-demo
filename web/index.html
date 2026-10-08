@@ -15,6 +15,14 @@
         <option value="live" selected>Live motion</option>
         <option value="staged">State space · 25 steps</option>
       </select>
+      <div class="appearance" aria-label="Appearance">
+        <label for="color-mode">Mode</label><select id="color-mode">
+          <option value="dark">Dark</option><option value="light">Light</option><option value="system">System</option>
+        </select>
+        <label for="color-theme">Theme</label><select id="color-theme">
+          <option value="uq">UQ purple</option><option value="ocean">Ocean</option><option value="amber">Amber</option>
+        </select>
+      </div>
       <span>METR6203</span
       ><span id="status" aria-live="polite">k = 1 · Prediction</span>
     </header>
@@ -302,5 +310,6 @@
     <script src="live-model.js"></script>
     <script src="app.js"></script>
     <script src="live.js"></script>
+    <script src="theme.js"></script>
   </body>
 </html>

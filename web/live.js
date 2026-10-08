@@ -120,9 +120,9 @@ function liveDraw() {
       top + ((b.ymax - x[1]) / (b.ymax - b.ymin)) * b.ph,
     ];
   ctx.font = "11px system-ui";
-  ctx.strokeStyle = "#332c3c";
+  ctx.strokeStyle = palette.grid;
   ctx.lineWidth = 1;
-  ctx.fillStyle = "#b4aabb";
+  ctx.fillStyle = palette.muted;
   for (let i = 0; i <= 4; i++) {
     const x = left + (b.pw * i) / 4,
       y = top + (b.ph * i) / 4;
