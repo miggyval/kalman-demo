@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>METR6203 · Kalman filter</title>
+    <link rel="stylesheet" href="vendor/katex/katex.min.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <header>
+      <h1>Kalman filter</h1>
+      <span>METR6203</span
+      ><span id="status" aria-live="polite">k = 1 · Prediction</span>
+    </header>
+    <main>
+      <section class="state-panel" aria-label="State-space visualisation">
+        <div class="plot-title">
+          <h2>State space</h2>
+          <div class="legend">
+            <span class="truth">True state</span
+            ><span class="prior">Prediction</span
+            ><span class="posterior">Update</span
+            ><span class="measurement">Measurement</span>
+          </div>
+        </div>
+        <div
+          class="visibility"
+          id="visibility"
+          aria-label="Plot visibility"
+        ></div>
+        <canvas
+          id="state-plot"
+          aria-label="Height against vertical velocity, state estimates, one-sigma covariance ellipses and height measurement"
+        ></canvas>
+        <div class="playback">
+          <button id="play">Play</button
+          ><button id="previous" aria-label="Previous step">Previous</button
+          ><button id="next" aria-label="Next step">Next</button
+          ><button id="reset">Reset</button> <label for="speed">Speed</label
+          ><select id="speed">
+            <option value="0.5">0.5×</option>
+            <option value="1" selected>1×</option>
+            <option value="2">2×</option>
+            <option value="4">4×</option>
+          </select>
+          <label for="iteration">k</label
+          ><input
+            id="iteration"
+            type="range"
+            min="1"
+            max="25"
+            value="1"
+          /><output id="iteration-value">1 / 25</output>
+        </div>
+        <form id="parameters">
+          <label
+            >Δt [s]<input
+              id="dt"
+              type="number"
+              min="0.01"
+              max="1"
+              step="0.01"
+              value="0.15"
+              required
+          /></label>
+          <label
+            >σw [m/s²]<input
+              id="processStd"
+              type="number"
+              min="0"
+              max="20"
+              step="0.1"
+              value="2"
+              required
+          /></label>
+          <label
+            >σν [m]<input
+              id="sensorStd"
+              type="number"
+              min="0.01"
+              max="30"
+              step="0.01"
+              value="3"
+              required
+          /></label>
+          <label
+            >g [m/s²]<input
+              id="gravity"
+              type="number"
+              min="0"
+              max="30"
+              step="0.01"
+              value="9.81"
+              required
+          /></label>
+          <label
+            >h₀ [m]<input
+              id="height"
+              type="number"
+              min="-1000"
+              max="1000"
+              step="1"
+              value="100"
+              required
+          /></label>
+          <label
+            >v₀ [m/s]<input
+              id="velocity"
+              type="number"
+              min="-100"
+              max="100"
+              step="1"
+              value="0"
+              required
+          /></label>
+          <label
+            >P₀,hh [m²]<input
+              id="pHeight"
+              type="number"
+              min="0"
+              max="1000"
+              step="1"
+              value="25"
+              required
+          /></label>
+          <label
+            >P₀,vv [m²/s²]<input
+              id="pVelocity"
+              type="number"
+              min="0"
+              max="1000"
+              step="1"
+              value="16"
+              required
+          /></label>
+        </form>
+        <details id="experiments">
+          <summary>Additional controls</summary>
+          <div class="experiment-controls">
+            <label
+              >Measurements<select id="scenario">
+                <option value="normal">Normal</option>
+                <option value="dropout">Gap: k = 11–15</option>
+                <option value="outlier">Outlier: k = 12</option>
+              </select></label
+            >
+            <button type="button" id="outlier">Outlier at selected k</button>
+            <label class="check"
+              ><input id="matched" type="checkbox" checked /> Matching
+              noise</label
+            >
+            <label
+              >Assumed σw [m/s²]<input
+                id="assumedProcess"
+                type="number"
+                min="0"
+                max="20"
+                step="0.1"
+                value="2"
+                disabled
+            /></label>
+            <label
+              >Assumed σν [m]<input
+                id="assumedSensor"
+                type="number"
+                min="0.01"
+                max="30"
+                step="0.01"
+                value="3"
+                disabled
+            /></label>
+            <label class="check"
+              ><input id="compare" type="checkbox" /> Smoother comparison</label
+            >
+          </div>
+        </details>
+        <canvas
+          id="comparison"
+          hidden
+          aria-label="Height estimates: Kalman, IIR and moving average"
+        ></canvas>
+        <div class="plot-meta">
+          <span>Ellipse: Mahalanobis distance = 1</span
+          ><span id="sim-time">t = 0.000 s</span
+          ><span>Seed = 7 · P₀,hv = 0</span>
+        </div>
+      </section>
+      <aside>
+        <section class="algorithm">
+          <h2>Model</h2>
+          <div id="model-equations"></div>
+          <div id="model-matrices"></div>
+          <div id="noise-equations"></div>
+          <div class="equation-stage prediction" id="prediction-equations">
+            <h2>Prediction</h2>
+            <div id="predict-x"></div>
+            <div id="predict-p"></div>
+          </div>
+          <div class="equation-stage update" id="update-equations">
+            <h2>Measurement update</h2>
+            <div id="update-rs"></div>
+            <div id="update-k"></div>
+            <div id="update-x"></div>
+            <div id="update-p"></div>
+          </div>
+        </section>
+        <section class="numerical">
+          <h2>Numerical values <span id="numeric-stage"></span></h2>
+          <div class="value-grid">
+            <div class="prior" id="value-prior-x"></div>
+            <div class="prior" id="value-prior-p"></div>
+            <div id="value-y"></div>
+            <div id="value-rs"></div>
+            <div class="posterior" id="value-k"></div>
+            <div class="posterior" id="value-x"></div>
+            <div class="posterior" id="value-p"></div>
+            <div class="truth" id="value-truth"></div>
+          </div>
+        </section>
+      </aside>
+    </main>
+    <script src="vendor/katex/katex.min.js"></script>
+    <script src="model.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

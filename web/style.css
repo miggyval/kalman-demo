@@ -1,0 +1,419 @@
+:root {
+  --ink: #17212b;
+  --muted: #5c6670;
+  --line: #ccd1d6;
+  --prior: #2264ac;
+  --post: #ac4820;
+  --measurement: #707782;
+  --truth: #15232d;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: #fff;
+  color: var(--ink);
+  font:
+    14px/1.35 system-ui,
+    sans-serif;
+}
+header {
+  height: 48px;
+  padding: 0 20px;
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+}
+h1 {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0;
+}
+header > span {
+  font-size: 12px;
+  color: var(--muted);
+}
+#status {
+  margin-left: auto;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--prior);
+}
+main {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(460px, 1fr);
+  gap: 20px;
+  padding: 14px 20px;
+  max-width: 1800px;
+  margin: auto;
+}
+h2 {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 10px;
+}
+.plot-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: center;
+  height: 36px;
+}
+.plot-title h2 {
+  margin: 0;
+}
+.legend {
+  display: flex;
+  gap: 14px;
+  font-size: 12px;
+  flex-wrap: wrap;
+}
+.legend span:before {
+  content: "";
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  border: 2px solid currentColor;
+  margin-right: 5px;
+}
+.legend .truth:before {
+  background: var(--truth);
+  border-radius: 50%;
+}
+.legend .measurement:before {
+  width: 14px;
+  height: 0;
+  border: 0;
+  border-top: 1px dashed currentColor;
+  vertical-align: middle;
+}
+.prior {
+  color: var(--prior);
+}
+.posterior {
+  color: var(--post);
+}
+.truth {
+  color: var(--truth);
+}
+.measurement {
+  color: var(--measurement);
+}
+#state-plot {
+  display: block;
+  width: 100%;
+  height: calc(100vh - 272px);
+  min-height: 420px;
+  max-height: 840px;
+}
+.playback {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+}
+button,
+select,
+input {
+  font: inherit;
+  color: inherit;
+  background: #fff;
+  border: 1px solid #aeb6be;
+  border-radius: 2px;
+}
+button {
+  padding: 6px 10px;
+  cursor: pointer;
+}
+button:hover {
+  background: #edf1f5;
+}
+button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+button:focus-visible,
+input:focus-visible,
+select:focus-visible {
+  outline: 2px solid var(--prior);
+  outline-offset: 2px;
+}
+#play {
+  min-width: 58px;
+}
+select {
+  padding: 4px;
+}
+input[type="range"] {
+  min-width: 65px;
+  flex: 1;
+  accent-color: var(--prior);
+}
+output {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+#parameters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px 14px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+#parameters label {
+  color: var(--muted);
+  font-size: 11px;
+}
+#parameters input {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 4px 6px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+input:invalid {
+  border-color: #ac4820;
+}
+.plot-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font-size: 10px;
+  margin-top: 10px;
+}
+aside {
+  border-left: 1px solid var(--line);
+  padding-left: 20px;
+  min-width: 0;
+}
+.algorithm {
+  font-size: 15px;
+}
+.katex {
+  font-size: 1.08em;
+}
+.katex-display {
+  margin: 7px 0;
+  text-align: left;
+}
+.katex-display > .katex {
+  text-align: left;
+}
+.algorithm > h2 {
+  margin-top: 8px;
+}
+.equation-stage {
+  padding: 8px 10px;
+  margin: 10px -10px 0;
+  border-left: 3px solid transparent;
+}
+.equation-stage h2 {
+  margin: 0 0 7px;
+}
+.equation-stage.active.prediction {
+  border-left-color: var(--prior);
+  background: #f0f5fb;
+}
+.equation-stage.active.update {
+  border-left-color: var(--post);
+  background: #faf2ee;
+}
+.equation-stage.active.prediction h2 {
+  color: var(--prior);
+}
+.equation-stage.active.update h2 {
+  color: var(--post);
+}
+#model-matrices {
+  font-size: 12px;
+}
+#noise-equations {
+  font-size: 12px;
+}
+.numerical {
+  border-top: 1px solid var(--line);
+  margin-top: 12px;
+  padding-top: 12px;
+}
+.numerical h2 {
+  display: flex;
+  justify-content: space-between;
+}
+.numerical h2 span {
+  font-weight: 400;
+  font-size: 11px;
+  color: var(--muted);
+}
+.value-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px 12px;
+  font-size: 14px;
+}
+.value-grid > div {
+  min-width: 0;
+  min-height: 43px;
+  display: flex;
+  align-items: center;
+  overflow-x: auto;
+}
+.value-grid .katex-display {
+  margin: 0;
+}
+.plot-meta,
+#status {
+  font-variant-numeric: tabular-nums;
+}
+@media (min-width: 1450px) {
+  main {
+    grid-template-columns: minmax(0, 1.65fr) minmax(520px, 1fr);
+  }
+  .algorithm,
+  .value-grid {
+    font-size: 15px;
+  }
+}
+@media (max-width: 1050px) {
+  main {
+    grid-template-columns: 1fr;
+    max-width: 1000px;
+  }
+  aside {
+    border-left: 0;
+    padding-left: 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    border-top: 1px solid var(--line);
+    padding-top: 14px;
+  }
+  .numerical {
+    margin: 0;
+    padding: 0;
+    border: 0;
+  }
+  #state-plot {
+    height: 480px;
+    min-height: 300px;
+  }
+  header {
+    padding: 0 14px;
+  }
+  main {
+    padding: 10px 14px;
+  }
+  .plot-title {
+    height: auto;
+    min-height: 36px;
+  }
+  .legend {
+    font-size: 11px;
+  }
+}
+@media (max-width: 640px) {
+  aside {
+    grid-template-columns: 1fr;
+  }
+  .playback {
+    flex-wrap: wrap;
+  }
+  #iteration {
+    min-width: 120px;
+  }
+  #parameters {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  #state-plot {
+    height: 380px;
+  }
+  .plot-title {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .plot-meta {
+    flex-wrap: wrap;
+  }
+  .legend {
+    gap: 10px;
+  }
+  header > span:not(#status) {
+    display: none;
+  }
+}
+.visibility {
+  display: flex;
+  gap: 6px 12px;
+  flex-wrap: wrap;
+  margin: 8px 0;
+  font-size: 11px;
+}
+.visibility label,
+.check {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+input[type="checkbox"] {
+  accent-color: var(--prior);
+  margin: 0;
+}
+details {
+  border-top: 1px solid var(--line);
+  margin-top: 10px;
+  padding-top: 8px;
+  font-size: 11px;
+}
+summary {
+  cursor: pointer;
+  color: var(--muted);
+}
+.experiment-controls {
+  display: flex;
+  align-items: end;
+  gap: 8px 14px;
+  flex-wrap: wrap;
+  padding: 10px 0;
+}
+.experiment-controls label:not(.check) {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.experiment-controls input[type="number"] {
+  width: 90px;
+  padding: 4px;
+}
+.experiment-controls input:disabled {
+  opacity: 0.45;
+}
+#comparison {
+  display: block;
+  width: 100%;
+  height: 150px;
+  margin-top: 12px;
+}
+#state-plot {
+  height: calc(100vh - 370px);
+}
+[hidden] {
+  display: none !important;
+}
+@media (max-width: 1050px) {
+  #state-plot {
+    height: 450px;
+  }
+}
+.value-grid > div.pending {
+  color: #92989f;
+}
+.equation-stage.absent {
+  opacity: 0.45;
+}
