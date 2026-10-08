@@ -21,8 +21,9 @@ function element(id = "") {
     checked: false,
     disabled: false,
     textContent: "",
-    classList: { toggle() {} },
-    getBoundingClientRect: () => ({ width: 700, height: 450 }),
+    options: [{}, {}, {}],
+    classList: { toggle() {}, remove() {} },
+    getBoundingClientRect: () => ({ width: 700, height: 450, left: 0, top: 0 }),
     getContext: () => canvas,
     addEventListener(event, callback) {
       this[event] = callback;
@@ -55,6 +56,7 @@ const context = vm.createContext({
   requestAnimationFrame: () => {},
   window: { addEventListener() {} },
   document: {
+    body: element(),
     getElementById: (id) => elements[id],
     createElement: () => element(),
     createTextNode: (s) => s,
@@ -103,4 +105,35 @@ elements.compare.onchange();
 run("draw()");
 console.log(
   "Browser integration: all 50 stages, interpolation, LaTeX, visibility, backwards stepping, parameter regeneration, gaps, outliers and comparison passed",
+);
+
+vm.runInContext(fs.readFileSync("web/live-model.js", "utf8"), context);
+context.LiveSimulation = context.window.LiveSimulation;
+elements["demo-mode"].value = "live";
+vm.runInContext(fs.readFileSync("web/live.js", "utf8"), context);
+assert.equal(run("demoMode"), "live");
+for (let i = 0; i < 51; i++) run("liveAnimate(" + i * 20 + ")");
+assert.ok(Math.abs(run("live.time") - 1.02) < 1e-9, "1x wall-clock playback");
+elements.play.onclick();
+const pausedTime = run("live.time");
+run("liveAnimate(2000)");
+assert.equal(run("live.time"), pausedTime);
+elements["force-type"].value = "known";
+elements["state-plot"].pointerdown({ clientX: 500, clientY: 150 });
+assert.equal(run("live.forces.length"), 1);
+assert.equal(run("live.forces[0].known"), true);
+elements.next.onclick();
+assert.ok(run("live.time") > pausedTime);
+const liveValues = elements["value-p"].dataset.tex;
+elements.previous.onclick();
+elements.next.onclick();
+assert.equal(elements["value-p"].dataset.tex, liveValues);
+elements["demo-mode"].value = "staged";
+elements["demo-mode"].onchange();
+assert.equal(run("demoMode"), "staged");
+elements["demo-mode"].value = "live";
+elements["demo-mode"].onchange();
+assert.equal(run("demoMode"), "live");
+console.log(
+  "Live UI: real-time scheduler, pause, force click, known input, history and mode switching passed",
 );

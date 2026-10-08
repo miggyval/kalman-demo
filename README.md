@@ -2,7 +2,7 @@
 
 A demonstration of estimating 2D motion from noisy position measurements. Use the **browser lab** for a presentation, the **Matplotlib/Pygame demo** for live keyboard control, or the **notebook** for the equations and repeatable comparisons.
 
-## Browser state-space demo
+## Browser demo
 
 Open [`web/index.html`](web/index.html) in a modern browser. KaTeX and its fonts are included locally; there are no external requests or build steps. Alternatively:
 
@@ -12,6 +12,16 @@ python3 -m http.server 8000 --bind 127.0.0.1
 ```
 
 ![Browser state-space demo](docs/browser-lab.png)
+
+**Live motion** is the default view. It runs continuously at wall-clock speed when speed is 1×, with a periodic reference path and a damped controller. The state is `[px, py, vx, vy]`; measurements contain x/y position only. The controller acceleration and gravity are known inputs. Process disturbances are independent acceleration noise, propagated through `G Q Gᵀ`.
+
+Click inside the plot to apply a force pointing from the current true position towards the clicked position. Set force magnitude in newtons, duration in seconds, and mass in kilograms using sliders. **Known input** supplies the resulting acceleration `F/m` to both the plant and filter prediction; **Disturbance** supplies it only to the plant. The force arrow is scaled by 0.2 metres per newton. Repeated clicks add forces; Clear forces cancels them.
+
+All numerical settings use sliders. Noise, gravity, timestep, mass, periodic amplitude/period, damping, and assumed noise change the ongoing run. Initial height/velocity/covariance sliders restart from the chosen initial conditions when released. Pause freezes simulation time and force expiry; Previous/Next and the iteration slider inspect the stored last eight seconds without regenerating measurements. Resuming returns to the newest state. Sensor gaps and outliers can repeat every eight seconds; smoother comparison shows positional errors and RMSE.
+
+Real-time playback uses a fixed-step accumulator driven by elapsed animation-frame time. The default timestep is 0.02 seconds, and mathematical values redraw at up to 20 Hz. Long browser stalls are limited to 0.25 seconds of catch-up per frame; a suspended/background tab is not treated as a reliable wall-clock timer.
+
+Choose **State space · 25 steps** for the original height/velocity teaching view described below. Its playback also uses simulation time: prediction and update each occupy half a sampling interval.
 
 The state is `[h, v]`: height in metres and vertical velocity in metres per second. The plot uses velocity on the horizontal axis and height on the vertical axis. A height measurement spans the plot as a horizontal dashed line.
 
@@ -96,6 +106,7 @@ For a suggested five-minute walkthrough and more UI ideas, see [presentation not
 python -m unittest discover -s tests -v
 node tests/browser-model.test.js    # Optional Node.js checks
 node tests/browser-ui.test.js
+node tests/live-model.test.js
 ```
 
 Tests cover repeatability, tracking error, known acceleration, the SMA window, IIR initialization, zero noise, covariance stability under bursts, Euler dynamics, Joseph updates, eigenvalue ellipses, stored playback, LaTeX rendering, visibility toggles, parameter changes, and missing measurements.

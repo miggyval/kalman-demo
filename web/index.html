@@ -10,13 +10,18 @@
   <body>
     <header>
       <h1>Kalman filter</h1>
+      <label for="demo-mode">View</label
+      ><select id="demo-mode">
+        <option value="live" selected>Live motion</option>
+        <option value="staged">State space · 25 steps</option>
+      </select>
       <span>METR6203</span
       ><span id="status" aria-live="polite">k = 1 · Prediction</span>
     </header>
     <main>
       <section class="state-panel" aria-label="State-space visualisation">
         <div class="plot-title">
-          <h2>State space</h2>
+          <h2 id="plot-heading">State space</h2>
           <div class="legend">
             <span class="truth">True state</span
             ><span class="prior">Prediction</span
@@ -38,13 +43,14 @@
           ><button id="previous" aria-label="Previous step">Previous</button
           ><button id="next" aria-label="Next step">Next</button
           ><button id="reset">Reset</button> <label for="speed">Speed</label
-          ><select id="speed">
-            <option value="0.5">0.5×</option>
-            <option value="1" selected>1×</option>
-            <option value="2">2×</option>
-            <option value="4">4×</option>
-          </select>
-          <label for="iteration">k</label
+          ><input
+            id="speed"
+            type="range"
+            min="0.25"
+            max="4"
+            step="0.25"
+            value="1"
+          /><output id="speed-value">1×</output> <label for="iteration">k</label
           ><input
             id="iteration"
             type="range"
@@ -57,84 +63,155 @@
           <label
             >Δt [s]<input
               id="dt"
-              type="number"
+              type="range"
               min="0.01"
               max="1"
               step="0.01"
               value="0.15"
-              required
-          /></label>
+              required /><output id="dt-value"></output
+          ></label>
           <label
             >σw [m/s²]<input
               id="processStd"
-              type="number"
+              type="range"
               min="0"
               max="20"
               step="0.1"
               value="2"
-              required
-          /></label>
+              required /><output id="processStd-value"></output
+          ></label>
           <label
             >σν [m]<input
               id="sensorStd"
-              type="number"
+              type="range"
               min="0.01"
               max="30"
               step="0.01"
               value="3"
-              required
-          /></label>
+              required /><output id="sensorStd-value"></output
+          ></label>
           <label
             >g [m/s²]<input
               id="gravity"
-              type="number"
+              type="range"
               min="0"
               max="30"
               step="0.01"
               value="9.81"
-              required
-          /></label>
+              required /><output id="gravity-value"></output
+          ></label>
           <label
             >h₀ [m]<input
               id="height"
-              type="number"
+              type="range"
               min="-1000"
               max="1000"
               step="1"
               value="100"
-              required
-          /></label>
+              required /><output id="height-value"></output
+          ></label>
           <label
             >v₀ [m/s]<input
               id="velocity"
-              type="number"
+              type="range"
               min="-100"
               max="100"
               step="1"
               value="0"
-              required
-          /></label>
+              required /><output id="velocity-value"></output
+          ></label>
           <label
             >P₀,hh [m²]<input
               id="pHeight"
-              type="number"
+              type="range"
               min="0"
               max="1000"
               step="1"
               value="25"
-              required
-          /></label>
+              required /><output id="pHeight-value"></output
+          ></label>
           <label
             >P₀,vv [m²/s²]<input
               id="pVelocity"
-              type="number"
+              type="range"
               min="0"
               max="1000"
               step="1"
               value="16"
-              required
-          /></label>
+              required /><output id="pVelocity-value"></output
+          ></label>
         </form>
+        <div id="live-controls" hidden>
+          <label
+            >Force [N]<input
+              id="force-strength"
+              type="range"
+              min="0"
+              max="100"
+              step="1"
+              value="30"
+            /><output id="force-strength-value">30</output></label
+          >
+          <label
+            >Duration [s]<input
+              id="force-duration"
+              type="range"
+              min="0.1"
+              max="5"
+              step="0.1"
+              value="1"
+            /><output id="force-duration-value">1</output></label
+          >
+          <label
+            >Mass [kg]<input
+              id="mass"
+              type="range"
+              min="0.1"
+              max="10"
+              step="0.1"
+              value="1"
+            /><output id="mass-value">1</output></label
+          >
+          <label
+            >Amplitude [m]<input
+              id="amplitude"
+              type="range"
+              min="0"
+              max="40"
+              step="1"
+              value="20"
+            /><output id="amplitude-value">20</output></label
+          >
+          <label
+            >Period [s]<input
+              id="period"
+              type="range"
+              min="4"
+              max="15"
+              step="0.5"
+              value="6"
+            /><output id="period-value">6</output></label
+          >
+          <label
+            >Damping [s⁻¹]<input
+              id="damping"
+              type="range"
+              min="0.5"
+              max="8"
+              step="0.1"
+              value="2"
+            /><output id="damping-value">2</output></label
+          >
+          <label
+            >Force type<select id="force-type">
+              <option value="disturbance">Disturbance</option>
+              <option value="known">Known input</option>
+            </select></label
+          >
+          <span>Click plot: force direction</span
+          ><output id="applied-force"></output
+          ><button id="clear-forces" type="button">Clear forces</button>
+        </div>
         <details id="experiments">
           <summary>Additional controls</summary>
           <div class="experiment-controls">
@@ -153,23 +230,23 @@
             <label
               >Assumed σw [m/s²]<input
                 id="assumedProcess"
-                type="number"
+                type="range"
                 min="0"
                 max="20"
                 step="0.1"
                 value="2"
-                disabled
-            /></label>
+                disabled /><output id="matched-value"></output
+            ></label>
             <label
               >Assumed σν [m]<input
                 id="assumedSensor"
-                type="number"
+                type="range"
                 min="0.01"
                 max="30"
                 step="0.01"
                 value="3"
-                disabled
-            /></label>
+                disabled /><output id="assumedSensor-value"></output
+            ></label>
             <label class="check"
               ><input id="compare" type="checkbox" /> Smoother comparison</label
             >
@@ -222,6 +299,8 @@
     </main>
     <script src="vendor/katex/katex.min.js"></script>
     <script src="model.js"></script>
+    <script src="live-model.js"></script>
     <script src="app.js"></script>
+    <script src="live.js"></script>
   </body>
 </html>

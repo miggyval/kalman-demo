@@ -42,6 +42,7 @@ for (const [key, label] of Object.entries(visibilityLabels)) {
   wrapper.append(input, document.createTextNode(label));
   $("visibility").append(wrapper);
 }
+let demoMode = "staged";
 let simulation,
   phase = 0,
   progress = 0,
@@ -419,6 +420,10 @@ function comparison() {
   }
 }
 function draw() {
+  if (demoMode === "live" && typeof liveDraw === "function") {
+    liveDraw();
+    return;
+  }
   if (!simulation) return;
   plot();
   numbers();
@@ -429,6 +434,10 @@ function stop() {
   $("play").textContent = "Play";
 }
 function regenerate(keepPosition = false) {
+  if (demoMode === "live" && typeof liveParameters === "function") {
+    liveParameters();
+    return;
+  }
   if (
     !$("parameters").checkValidity() ||
     !$("assumedProcess").checkValidity() ||
@@ -552,19 +561,21 @@ regenerate();
 function animate(now) {
   if (playing) {
     if (previousTime !== undefined) {
-      progress = Math.min(
-        1,
-        progress +
-          (Math.min(0.1, (now - previousTime) / 1000) * +$("speed").value) /
-            1.2,
-      );
-      if (progress >= 1) {
-        if (phase === simulation.rows.length * 2 - 1) stop();
-        else {
-          draw();
-          phase++;
-          progress = 0;
-        }
+      let remaining =
+        Math.min(0.25, (now - previousTime) / 1000) * +$("speed").value;
+      const stageDuration = simulation.parameters.dt / 2;
+      while (remaining > 0 && playing) {
+        const amount = Math.min(remaining, (1 - progress) * stageDuration);
+        progress = Math.min(1, progress + amount / stageDuration);
+        remaining -= amount;
+        if (progress >= 1 - 1e-10) {
+          progress = 1;
+          if (phase === simulation.rows.length * 2 - 1) stop();
+          else {
+            phase++;
+            progress = 0;
+          }
+        } else break;
       }
     }
     draw();

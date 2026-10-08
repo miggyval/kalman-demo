@@ -424,3 +424,77 @@ summary {
 .equation-stage.absent {
   opacity: 0.45;
 }
+header label {
+  font-size: 12px;
+  margin-left: 10px;
+}
+header select {
+  font-size: 12px;
+  padding: 4px;
+}
+#speed {
+  flex: 0 1 90px;
+  width: 90px;
+}
+#parameters output,
+.experiment-controls output,
+#live-controls output {
+  float: right;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+#parameters input[type="range"],
+.experiment-controls input[type="range"],
+#live-controls input[type="range"] {
+  padding: 0;
+  border: 0;
+  width: 100%;
+  margin: 5px 0;
+  accent-color: var(--prior);
+}
+.experiment-controls label:not(.check) {
+  width: 145px;
+}
+#live-controls {
+  display: flex;
+  gap: 8px 14px;
+  flex-wrap: wrap;
+  align-items: center;
+  border-top: 1px solid var(--line);
+  padding: 10px 0;
+  font-size: 11px;
+}
+#live-controls label {
+  width: 125px;
+  color: var(--muted);
+}
+#live-controls > span {
+  color: var(--muted);
+}
+body.live .value-grid {
+  font-size: 11px;
+}
+body.live #state-plot {
+  height: calc(100vh - 520px);
+  min-height: 360px;
+  cursor: crosshair;
+}
+body.live .plot-meta {
+  margin-top: 2px;
+}
+body.live .numerical {
+  margin-top: 6px;
+}
+body.live .value-grid > div {
+  min-height: 65px;
+}
+body.live .value-grid #value-prior-p,
+body.live .value-grid #value-p {
+  min-height: 75px;
+}
+body.live #model-matrices {
+  font-size: 11px;
+}
+body.live .algorithm {
+  font-size: 13px;
+}
