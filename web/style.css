@@ -1,18 +1,21 @@
 :root {
-  --ink: #17212b;
-  --muted: #5c6670;
-  --line: #ccd1d6;
-  --prior: #2264ac;
-  --post: #ac4820;
-  --measurement: #707782;
-  --truth: #15232d;
+  color-scheme: dark;
+  --uq-purple: #51247a;
+  --background: #17131d;
+  --ink: #f2eee5;
+  --muted: #b4aabb;
+  --line: #43394e;
+  --prior: #8cbfe8;
+  --post: #c7a0ef;
+  --measurement: #9391a2;
+  --truth: #f2eee5;
 }
 * {
   box-sizing: border-box;
 }
 body {
   margin: 0;
-  background: #fff;
+  background: var(--background);
   color: var(--ink);
   font:
     14px/1.35 system-ui,
@@ -20,6 +23,7 @@ body {
 }
 header {
   height: 48px;
+  background: var(--uq-purple);
   padding: 0 20px;
   display: flex;
   gap: 20px;
@@ -33,7 +37,7 @@ h1 {
 }
 header > span {
   font-size: 12px;
-  color: var(--muted);
+  color: #e3d6ee;
 }
 #status {
   margin-left: auto;
@@ -121,8 +125,8 @@ select,
 input {
   font: inherit;
   color: inherit;
-  background: #fff;
-  border: 1px solid #aeb6be;
+  background: var(--background);
+  border: 1px solid #63556f;
   border-radius: 2px;
 }
 button {
@@ -130,7 +134,7 @@ button {
   cursor: pointer;
 }
 button:hover {
-  background: #edf1f5;
+  background: #30243d;
 }
 button:disabled {
   opacity: 0.4;
@@ -144,6 +148,9 @@ select:focus-visible {
 }
 #play {
   min-width: 58px;
+  background: var(--uq-purple);
+  border-color: #9572b4;
+  color: #fff;
 }
 select {
   padding: 4px;
@@ -177,7 +184,7 @@ output {
   font-variant-numeric: tabular-nums;
 }
 input:invalid {
-  border-color: #ac4820;
+  border-color: #c7a0ef;
 }
 .plot-meta {
   display: flex;
@@ -218,11 +225,11 @@ aside {
 }
 .equation-stage.active.prediction {
   border-left-color: var(--prior);
-  background: #f0f5fb;
+  background: #202936;
 }
 .equation-stage.active.update {
   border-left-color: var(--post);
-  background: #faf2ee;
+  background: #30213f;
 }
 .equation-stage.active.prediction h2 {
   color: var(--prior);
@@ -412,7 +419,7 @@ summary {
   }
 }
 .value-grid > div.pending {
-  color: #92989f;
+  color: #8f859a;
 }
 .equation-stage.absent {
   opacity: 0.45;

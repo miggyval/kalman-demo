@@ -2,12 +2,12 @@
 const $ = (id) => document.getElementById(id),
   Lab = KalmanLab;
 const palette = {
-  truth: "#15232d",
-  prior: "#2264ac",
-  posterior: "#ac4820",
-  measurement: "#707782",
-  iir: "#7c638e",
-  sma: "#477668",
+  truth: "#f2eee5",
+  prior: "#8cbfe8",
+  posterior: "#c7a0ef",
+  measurement: "#9391a2",
+  iir: "#f9b86b",
+  sma: "#7bbfac",
 };
 const visible = {
   truth: true,
@@ -164,7 +164,7 @@ function plot() {
     const hh = bounds.hmin + ((bounds.hmax - bounds.hmin) * i) / 5,
       vv = bounds.vmin + ((bounds.vmax - bounds.vmin) * i) / 5;
     const [vx, hy] = pos([hh, vv]);
-    ctx.strokeStyle = "#e5e8eb";
+    ctx.strokeStyle = "#332c3c";
     ctx.lineWidth = 1;
     ctx.beginPath();
     ctx.moveTo(left, hy);
@@ -172,13 +172,13 @@ function plot() {
     ctx.moveTo(vx, top);
     ctx.lineTo(vx, h - bottom);
     ctx.stroke();
-    ctx.fillStyle = "#5c6670";
+    ctx.fillStyle = "#b4aabb";
     ctx.textAlign = "right";
     ctx.fillText(hh.toFixed(1), left - 9, hy);
     ctx.textAlign = "center";
     ctx.fillText(vv.toFixed(1), vx, h - bottom + 17);
   }
-  ctx.strokeStyle = "#aeb6be";
+  ctx.strokeStyle = "#63556f";
   ctx.strokeRect(left, top, pw, ph);
   ctx.fillStyle = palette.truth;
   ctx.textAlign = "center";
@@ -209,7 +209,7 @@ function plot() {
   }
   function marker(x, color, shape) {
     const [a, b] = pos(x);
-    ctx.fillStyle = "#fff";
+    ctx.fillStyle = "#17131d";
     ctx.strokeStyle = color;
     ctx.lineWidth = 2;
     ctx.beginPath();
