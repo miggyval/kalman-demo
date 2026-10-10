@@ -227,6 +227,50 @@
           ><output id="applied-force"></output
           ><button id="clear-forces" type="button">Clear forces</button>
         </div>
+        <details id="disturbance-settings">
+          <summary>Disturbance force estimator · live mode</summary>
+          <label class="check"
+            ><input id="estimateForce" type="checkbox" /> Augmented Kalman
+            filter</label
+          >
+          <div class="disturbance-controls">
+            <label
+              >Force drift [N/√s]<input
+                id="forceDrift"
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+                value="10"
+              /><output id="forceDrift-value">10</output></label
+            >
+            <label
+              >Initial force σ [N]<input
+                id="forceInitialStd"
+                type="range"
+                min="0"
+                max="100"
+                step="1"
+                value="30"
+              /><output id="forceInitialStd-value">30</output></label
+            >
+          </div>
+          <small
+            >Unknown force: random walk. Known inputs remain separate.</small
+          >
+        </details>
+        <section id="disturbance-panel" hidden>
+          <h2>Disturbance force [N]</h2>
+          <div id="disturbance-model"></div>
+          <div id="disturbance-values"></div>
+          <canvas
+            id="force-history"
+            aria-label="Actual unknown and estimated disturbance force with plus/minus two standard deviation bands"
+          ></canvas>
+          <small
+            >Solid: estimate · dashed: actual unknown force · shaded: ±2σ</small
+          >
+        </section>
         <details id="filter-settings">
           <summary>Comparison filters</summary>
           <label class="check comparison-toggle"
@@ -466,11 +510,13 @@
     <script src="vendor/katex/katex.min.js"></script>
     <script src="filters.js"></script>
     <script src="model.js"></script>
+    <script src="augmented-model.js"></script>
     <script src="live-model.js"></script>
     <script src="app.js"></script>
     <script src="live.js"></script>
     <script src="filter-ui.js"></script>
     <script src="pole-ui.js"></script>
+    <script src="disturbance-ui.js"></script>
     <script src="theme.js"></script>
     <script src="settings.js"></script>
   </body>

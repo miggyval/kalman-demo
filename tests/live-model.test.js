@@ -1,6 +1,7 @@
 const assert = require("node:assert/strict");
 globalThis.KalmanLab = require("../web/model.js");
 globalThis.FilterComparison = require("../web/filters.js");
+globalThis.AugmentedKF = require("../web/augmented-model.js");
 const Live = require("../web/live-model.js");
 const p = {
   dt: 0.02,

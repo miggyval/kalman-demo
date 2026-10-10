@@ -10,6 +10,8 @@
         period: 6,
         damping: 2,
         mass: 1,
+        ...AugmentedKF.defaults,
+        estimateForce: false,
         ...parameters,
       };
       this.random = KalmanLab.generator(7);
@@ -31,10 +33,19 @@
         this.estimates,
         this.p,
       );
+      this.forceEstimator = null;
+      if (this.p.estimateForce) this.enableForceEstimator();
       this.forces = [];
       this.history = [];
       this.iir = this.truth.slice(0, 2);
       this.samples = [];
+    }
+    enableForceEstimator() {
+      this.forceEstimator = new AugmentedKF.ForceEstimator(
+        this.estimates,
+        this.covariances,
+        this.p,
+      );
     }
     normal() {
       return (
@@ -128,6 +139,13 @@
           ? this.samples.reduce((s, z) => s + z[j], 0) / this.samples.length
           : this.truth[j],
       );
+      const augmented = this.p.estimateForce
+        ? this.forceEstimator.step(
+            observations,
+            control.map((v, j) => v + known[j]),
+            p,
+          )
+        : null;
       const comparisons = this.comparison.step(
         observations,
         d,
@@ -183,6 +201,9 @@
         R: (p.matched === false ? p.assumedSensor : p.sensorStd) ** 2,
         missing,
         comparisons,
+        augmented,
+        disturbanceForce: applied.map((v, j) => (v - known[j]) * p.mass),
+        forceDrift: p.forceDrift,
         iir: this.iir.slice(),
         sma,
       };

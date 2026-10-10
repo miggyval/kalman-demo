@@ -3,6 +3,7 @@ function restoreSettings() {
   const defaults = {
     ...KalmanLab.defaults,
     ...FilterComparison.defaults,
+    ...AugmentedKF.defaults,
     mass: 1,
     amplitude: 20,
     period: 6,
@@ -24,6 +25,9 @@ function restoreSettings() {
     visible[key] = true;
     $("show-" + key).checked = true;
   }
+  $("estimateForce").checked = false;
+  $("disturbance-settings").open = false;
+  $("disturbance-panel").hidden = true;
   $("matched").checked = true;
   for (const id of ["assumedProcess", "assumedSensor"]) $(id).disabled = true;
   $("compare").checked = false;

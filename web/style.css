@@ -699,3 +699,52 @@ header > span,
   background: var(--accent, var(--uq-purple));
   color: #fff;
 }
+:root {
+  --augmented: #69d4dc;
+}
+:root[data-mode="light"] {
+  --augmented: #006d75;
+}
+.augmented {
+  color: var(--augmented);
+}
+#disturbance-settings > .check {
+  margin: 10px 0;
+}
+.disturbance-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 8px 0;
+}
+.disturbance-controls label {
+  width: 180px;
+  color: var(--muted);
+}
+.disturbance-controls input {
+  display: block;
+  width: 100%;
+}
+.disturbance-controls output {
+  float: right;
+}
+#disturbance-panel {
+  border-top: 1px solid var(--line);
+  margin-top: 10px;
+  padding-top: 10px;
+  font-size: 12px;
+}
+#disturbance-panel small,
+#disturbance-settings small {
+  color: var(--muted);
+  font-size: 10px;
+}
+#force-history {
+  display: block;
+  width: 100%;
+  height: 160px;
+  margin-top: 10px;
+}
+#disturbance-model {
+  font-size: 11px;
+}

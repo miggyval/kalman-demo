@@ -17,6 +17,25 @@ python3 -m http.server 8000 --bind 127.0.0.1
 
 Click inside the plot to apply a force pointing from the current true position towards the clicked position. Set force magnitude in newtons, duration in seconds, and mass in kilograms using sliders. **Known input** supplies the resulting acceleration `F/m` to both the plant and filter prediction; **Disturbance** supplies it only to the plant. The force arrow is scaled by 0.2 metres per newton. Repeated clicks add forces; Clear forces cancels them.
 
+**Disturbance force estimator** optionally runs an augmented KF alongside the standard KF in live mode. Enable it to draw its position estimate and a force history with estimated Fx/Fy, actual unknown force, and marginal ±2σ bands. Its visibility checkbox hides the trajectory; the estimator continues running.
+
+For each axis, augment the state to `[p, v, Fd]`:
+
+```text
+p[k+1]  = p[k] + dt v[k]
+v[k+1]  = v[k] + dt (a_known[k] + Fd[k]/m) + dt w_a[k]
+Fd[k+1] = Fd[k] + w_F[k]
+y[k]    = p[k] + measurement noise
+```
+
+The force follows a random walk, with `Var(w_F) = forceDrift² dt`; the force-drift slider is in N/√s. Independent acceleration noise still has variance `processStd²`. The per-axis process covariance is `diag(0, dt² processStd², dt forceDrift²)`, and position alone is measured. Two independent three-state filters form the six-state estimate `[px, py, vx, vy, Fx, Fy]`. Prediction and Joseph covariance updates use the same forward Euler convention as the original KF. Augmenting an unknown force as a random-walk state is also used in [force estimation research](https://arxiv.org/abs/1907.08254).
+
+Higher **Force drift** tracks changing forces more quickly but gives a noisier estimate; zero assumes a constant force. **Initial force uncertainty** sets the starting force standard deviation and reinitializes this estimator when changed. Enabling starts from the current standard KF state with zero force; it does not restart the motion. Known controller acceleration, gravity, and known clicked forces remain explicit inputs. Actual disturbance force is used only for the reference plot, never as a measurement. The reference excludes the separate white acceleration noise.
+
+![Augmented disturbance-force estimator](docs/browser-disturbance.png)
+
+Force is observable through position over successive samples: the per-axis observability determinant is `dt³/m`, nonzero for positive timestep and finite positive mass. Estimation still takes time because force changes velocity before position. Try a 3–5 second disturbance and lower sensor noise to see convergence clearly. Brief forces, outliers, wrong mass, and unmodelled acceleration can make the estimate lag or absorb modelling error. After a force ends, the random walk must infer its return to zero from subsequent measurements. The uncertainty bands describe the assumed model, not guaranteed coverage.
+
 The header’s **Reset settings** button asks for confirmation, then restores all controls, comparison filters, visibility, and appearance to defaults and starts a fresh live run. Cancel or Escape keeps the current settings. The playback **Reset** button restarts the run with the current settings.
 
 All numerical settings use sliders. Noise, gravity, timestep, mass, periodic amplitude/period, damping, and assumed noise change the ongoing run. Initial height/velocity/covariance sliders restart from the chosen initial conditions when released. Pause freezes simulation time and force expiry; Previous/Next and the iteration slider inspect the stored last eight seconds without regenerating measurements. Resuming returns to the newest state. Sensor gaps and outliers can repeat every eight seconds; filter comparison shows positional errors and RMSE for the enabled estimates.
@@ -118,6 +137,7 @@ node tests/browser-model.test.js    # Optional Node.js checks
 node tests/browser-ui.test.js
 node tests/live-model.test.js
 node tests/filters.test.js
+node tests/augmented-model.test.js
 ```
 
 Tests cover repeatability, tracking error, known acceleration, the SMA window, IIR initialization, zero noise, covariance stability under bursts, Euler dynamics, Joseph updates, eigenvalue ellipses, stored playback, LaTeX rendering, visibility toggles, parameter changes, and missing measurements.

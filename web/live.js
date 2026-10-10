@@ -33,6 +33,8 @@ const rangeIds = [
   "amplitude",
   "period",
   "damping",
+  "forceDrift",
+  "forceInitialStd",
 ];
 function sliderValues() {
   for (const id of rangeIds) {
@@ -58,6 +60,8 @@ function liveReset() {
   for (const id of parameterIds) p[id] = +$(id).value;
   for (const id of ["mass", "amplitude", "period", "damping"])
     p[id] = +$(id).value;
+  if (typeof disturbanceSettings === "function")
+    Object.assign(p, disturbanceSettings());
   p.matched = $("matched").checked;
   p.scenario = $("scenario").value;
   live = new LiveSimulation(p);
@@ -99,6 +103,9 @@ function liveDraw() {
   const half = Math.max(
     20,
     live.p.amplitude * 1.1,
+    ...(visible.augmented && row.augmented
+      ? row.augmented.position.map((v, j) => Math.abs(v - live.origin[j]) + 5)
+      : []),
     ...row.truth.slice(0, 2).map((v, j) => Math.abs(v - live.origin[j]) + 10),
     ...["observer", "fir", "iir"]
       .filter((key) => visible[key] && row.comparisons)
@@ -213,6 +220,21 @@ function liveDraw() {
     if (visible.trails) path(history.map(position), palette[key], true);
     marker(position(row), palette[key]);
   }
+  if (visible.augmented && row.augmented) {
+    if (visible.trails)
+      path(
+        history.filter((r) => r.augmented).map((r) => r.augmented.position),
+        palette.augmented,
+        true,
+      );
+    marker(row.augmented.position, palette.augmented);
+    if (visible.arrows)
+      arrow(
+        row.truth,
+        row.truth.slice(0, 2).map((v, j) => v + row.augmented.force[j] * 0.2),
+        palette.augmented,
+      );
+  }
   if (visible.measurement)
     for (const r of history.slice(-80))
       if (!r.missing) {
@@ -280,11 +302,15 @@ function liveDraw() {
   $("next").disabled = false;
   $("play").textContent = livePlaying ? "Pause" : "Play";
   if (!$("comparison").hidden) liveComparison(history);
+  if (typeof drawDisturbance === "function") drawDisturbance(history, row);
 }
 function liveComparison(rows) {
   const { ctx, w, h } = canvasSetup($("comparison"));
+  const includeAugmented = visible.augmented && rows.at(-1).augmented;
+  if (includeAugmented) rows = rows.filter((r) => r.augmented);
   const keys = [
     "posterior",
+    ...(includeAugmented ? ["augmented"] : []),
     ...["observer", "fir", "iir"].filter((key) => visible[key]),
   ];
   const errors = rows.map((r) =>
@@ -294,7 +320,9 @@ function liveComparison(rows) {
             (j) =>
               (key === "posterior"
                 ? r.posterior[j]
-                : r.comparisons[key][j][0]) - r.truth[j],
+                : key === "augmented"
+                  ? r.augmented.position[j]
+                  : r.comparisons[key][j][0]) - r.truth[j],
           ),
         ),
       ),
@@ -319,7 +347,7 @@ function liveComparison(rows) {
       errors.reduce((s, e) => s + e[j] ** 2, 0) / errors.length,
     );
     ctx.fillText(
-      `${key === "posterior" ? "KF" : key === "observer" ? "Luenberger" : key.toUpperCase()} RMSE ${rmse.toFixed(2)}`,
+      `${key === "posterior" ? "KF" : key === "observer" ? "Luenberger" : key === "augmented" ? "Aug KF" : key.toUpperCase()} RMSE ${rmse.toFixed(2)}`,
       40 + (j * (w - 50)) / keys.length,
       12,
     );
@@ -419,6 +447,7 @@ $("demo-mode").onchange = () => {
     $("iteration").max = "25";
     regenerate();
   }
+  if (typeof disturbanceMode === "function") disturbanceMode();
   sliderValues();
 };
 $("demo-mode").onchange();

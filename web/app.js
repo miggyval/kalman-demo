@@ -10,6 +10,7 @@ const palette = {
   sma: "#7bbfac",
   fir: "#7bbfac",
   observer: "#ef8faa",
+  augmented: "#69d4dc",
   grid: "#332c3c",
   muted: "#b4aabb",
   border: "#63556f",
@@ -25,6 +26,7 @@ const visible = {
   arrows: true,
   trails: true,
   observer: true,
+  augmented: true,
   fir: true,
   iir: true,
 };
@@ -38,6 +40,7 @@ const visibilityLabels = {
   arrows: "Arrows",
   trails: "Trails",
   observer: "Luenberger",
+  augmented: "Augmented KF",
   fir: "FIR",
   iir: "IIR",
 };

@@ -17,3 +17,4 @@ jobs:
       - run: node tests/browser-ui.test.js
       - run: node tests/live-model.test.js
       - run: node tests/filters.test.js
+      - run: node tests/augmented-model.test.js

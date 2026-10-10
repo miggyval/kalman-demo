@@ -127,6 +127,8 @@ console.log(
 
 vm.runInContext(fs.readFileSync("web/filters.js", "utf8"), context);
 context.FilterComparison = context.window.FilterComparison;
+vm.runInContext(fs.readFileSync("web/augmented-model.js", "utf8"), context);
+context.AugmentedKF = context.window.AugmentedKF;
 vm.runInContext(fs.readFileSync("web/live-model.js", "utf8"), context);
 context.LiveSimulation = context.window.LiveSimulation;
 elements["demo-mode"].value = "live";
@@ -257,6 +259,37 @@ assert.ok(
   "pole keyboard control must not trigger playback stepping",
 );
 
+vm.runInContext(fs.readFileSync("web/disturbance-ui.js", "utf8"), context);
+const timeBeforeAugmentation = run("live.time");
+elements.estimateForce.checked = true;
+elements.estimateForce.change({ target: elements.estimateForce });
+assert.equal(run("live.time"), timeBeforeAugmentation);
+assert.ok(run("live.forceEstimator !== null"));
+elements.next.onclick();
+assert.equal(elements["disturbance-panel"].hidden, false);
+assert.match(elements["disturbance-model"].dataset.tex, /F_d/);
+assert.ok(run("live.history.at(-1).augmented.force.every(Number.isFinite)"));
+const oldForceBank = run("live.forceEstimator");
+elements.forceDrift.value = "20";
+elements.forceDrift.input({ target: elements.forceDrift });
+assert.equal(run("live.forceEstimator"), oldForceBank);
+assert.equal(run("live.p.forceDrift"), 20);
+elements.forceInitialStd.value = "50";
+elements.forceInitialStd.input({ target: elements.forceInitialStd });
+assert.notEqual(run("live.forceEstimator"), oldForceBank);
+assert.equal(run("live.forceEstimator.axes[0].P[2][2]"), 2500);
+elements["demo-mode"].value = "staged";
+elements["demo-mode"].onchange();
+assert.equal(elements.estimateForce.disabled, true);
+assert.equal(elements["disturbance-panel"].hidden, true);
+elements["demo-mode"].value = "live";
+elements["demo-mode"].onchange();
+assert.equal(elements.estimateForce.disabled, false);
+assert.ok(run("live.history.at(-1).augmented !== null"));
+console.log(
+  "Disturbance UI: enable, tuning, history and mode switching passed",
+);
+
 vm.runInContext(fs.readFileSync("web/settings.js", "utf8"), context);
 elements.mass.value = "3";
 elements["reset-settings"].onclick();
@@ -280,3 +313,7 @@ assert.equal(elements["comparison"].hidden, true);
 console.log(
   "Settings reset: confirmation, cancellation, defaults and clean live restart passed",
 );
+
+assert.equal(elements.estimateForce.checked, false);
+assert.equal(run("live.p.estimateForce"), false);
+assert.equal(elements.forceDrift.value, "10");
