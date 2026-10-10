@@ -642,3 +642,30 @@ header > span,
 .comparison-toggle {
   margin-top: 10px;
 }
+
+#pole-map {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  display: block;
+  touch-action: none;
+  cursor: crosshair;
+  margin: 8px 0;
+  border: 1px solid var(--line);
+}
+#pole-readout {
+  float: none;
+  display: block;
+  white-space: normal;
+  font-size: 10px;
+}
+.filter-controls .check {
+  display: flex;
+}
+.filter-controls input[type="checkbox"] {
+  width: auto;
+  display: inline-block;
+}
+#pole-map:focus-visible {
+  outline: 2px solid var(--observer);
+}

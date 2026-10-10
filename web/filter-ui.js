@@ -16,6 +16,8 @@ function filterLabels() {
         ? $(key).value
         : (+$(key).value).toFixed(2);
   }
+  $("real-pole-controls").hidden = $("poleType").value === "complex";
+  $("complex-pole-controls").hidden = $("poleType").value !== "complex";
   $("firCutoff").disabled = $("firType").value !== "sinc";
 }
 function prepareStagedFilters() {

@@ -235,24 +235,66 @@
             <fieldset>
               <legend>Luenberger observer</legend>
               <label
-                >Pole 1<input
-                  id="pole1"
-                  type="range"
-                  min="0"
-                  max="0.99"
-                  step="0.01"
-                  value="0.85" /><output id="pole1-value"></output
-              ></label>
-              <label
-                >Pole 2<input
-                  id="pole2"
-                  type="range"
-                  min="0"
-                  max="0.99"
-                  step="0.01"
-                  value="0.90" /><output id="pole2-value"></output
-              ></label>
-              <small>Discrete poles · prediction and position correction</small>
+                >Poles<select id="poleType">
+                  <option value="real">Real pair</option>
+                  <option value="complex">Complex conjugate pair</option>
+                </select></label
+              >
+              <div id="real-pole-controls">
+                <label
+                  >Pole 1<input
+                    id="pole1"
+                    type="range"
+                    min="-0.99"
+                    max="0.99"
+                    step="0.01"
+                    value="0.85" /><output id="pole1-value"></output
+                ></label>
+                <label
+                  >Pole 2<input
+                    id="pole2"
+                    type="range"
+                    min="-0.99"
+                    max="0.99"
+                    step="0.01"
+                    value="0.90" /><output id="pole2-value"></output
+                ></label>
+              </div>
+              <div id="complex-pole-controls" hidden>
+                <label
+                  >Radius<input
+                    id="poleRadius"
+                    type="range"
+                    min="0"
+                    max="0.99"
+                    step="0.01"
+                    value="0.9" /><output id="poleRadius-value"></output
+                ></label>
+                <label
+                  >Angle [°]<input
+                    id="poleAngle"
+                    type="range"
+                    min="0"
+                    max="180"
+                    step="1"
+                    value="30" /><output id="poleAngle-value"></output
+                ></label>
+              </div>
+              <label class="check pole-toggle"
+                ><input id="show-pole-map" type="checkbox" /> Pole plot</label
+              >
+              <canvas
+                id="pole-map"
+                hidden
+                tabindex="0"
+                role="img"
+                aria-label="Interactive z-plane pole placement, unit circle and radius 0.99 limit; drag poles or use arrow keys, Shift selects the second real pole"
+              ></canvas>
+              <output id="pole-readout"></output>
+              <small
+                >Discrete poles · |z| ≤ 0.99<br />Drag real poles within 0.05 to
+                form a complex pair.</small
+              >
             </fieldset>
             <fieldset>
               <legend>FIR</legend>
@@ -409,6 +451,7 @@
     <script src="app.js"></script>
     <script src="live.js"></script>
     <script src="filter-ui.js"></script>
+    <script src="pole-ui.js"></script>
     <script src="theme.js"></script>
   </body>
 </html>

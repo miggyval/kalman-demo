@@ -465,6 +465,7 @@ function comparison() {
   }
 }
 function draw() {
+  if (typeof drawPolePlot === "function") drawPolePlot();
   if (demoMode === "live" && typeof liveDraw === "function") {
     liveDraw();
     return;

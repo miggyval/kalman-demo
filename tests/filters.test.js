@@ -88,3 +88,29 @@ near(after.observer[0][0], before.observer[0][0] + 0.1 * before.observer[0][1]);
 console.log(
   "Comparison filters: assigned poles, convergence, FIR taps/DC/causality, Butterworth cutoff gain, IIR stability and gaps passed",
 );
+// Complex-conjugate pole pairs give real gains and the requested characteristic polynomial.
+const { observerPoles } = require("../web/filters.js");
+for (const poleRadius of [0, 0.5, 0.99, 2])
+  for (const poleAngle of [0, 30, 90, 150, 180]) {
+    const p = { ...defaults, poleType: "complex", poleRadius, poleAngle };
+    const { points, sum, product } = observerPoles(p),
+      dt = 0.02;
+    assert.ok(points.every((z) => Math.hypot(...z) <= 0.9900000001));
+    near(points[0][0], points[1][0]);
+    near(points[0][1], -points[1][1]);
+    const l0 = 1 - product,
+      l1 = (1 + product - sum) / dt;
+    near(2 - l0 - dt * l1, sum);
+    near(1 - l0, product);
+    const bank = new ComparisonFilters([[5, 1]], p);
+    for (let i = 0; i < 3000; i++)
+      assert.ok(bank.step([0], dt, [0]).observer[0].every(Number.isFinite));
+    near(bank.axes[0].observer[0], 0, 1e-6);
+  }
+assert.equal(
+  observerPoles({ ...defaults, pole1: -2, pole2: 2 }).points[0][0],
+  -0.99,
+);
+console.log(
+  "Complex poles: conjugate symmetry, radius cap, real gains and stable convergence passed",
+);

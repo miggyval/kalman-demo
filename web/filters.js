@@ -2,6 +2,9 @@
    Cutoff is a fraction of Nyquist; FIR order N means N+1 taps. */
 (function (root) {
   const defaults = {
+    poleType: "real",
+    poleRadius: 0.9,
+    poleAngle: 30,
     pole1: 0.85,
     pole2: 0.9,
     firType: "mean",
@@ -11,6 +14,33 @@
     iirOrder: 2,
     iirCutoff: 0.15,
   };
+  function observerPoles(p) {
+    const clamp = (v) => Math.max(-0.99, Math.min(0.99, v));
+    if (p.poleType === "complex") {
+      const radius = Math.max(0, Math.min(0.99, p.poleRadius));
+      const angle = (Math.max(0, Math.min(180, p.poleAngle)) * Math.PI) / 180;
+      const re = radius * Math.cos(angle),
+        im = radius * Math.sin(angle);
+      return {
+        points: [
+          [re, im],
+          [re, -im],
+        ],
+        sum: 2 * re,
+        product: radius * radius,
+      };
+    }
+    const a = clamp(p.pole1),
+      b = clamp(p.pole2);
+    return {
+      points: [
+        [a, 0],
+        [b, 0],
+      ],
+      sum: a + b,
+      product: a * b,
+    };
+  }
   function firWeights(p) {
     const n = p.firOrder + 1;
     let w = Array.from({ length: n }, (_, i) => {
@@ -88,10 +118,10 @@
           iir = axis.lastIir;
         if (y !== null) {
           const residual = y - predicted[0],
-            { pole1: a, pole2: b } = this.p;
+            { sum, product } = observerPoles(this.p);
           // Eigenvalues of (I-LC)A are the selected discrete poles.
-          predicted[0] += (1 - a * b) * residual;
-          predicted[1] += ((1 + a * b - a - b) / dt) * residual;
+          predicted[0] += (1 - product) * residual;
+          predicted[1] += ((1 + product - sum) / dt) * residual;
           if (!axis.samples.length)
             axis.samples = Array(this.weights.length).fill(y);
           axis.samples.unshift(y);
@@ -123,6 +153,12 @@
       return outputs;
     }
   }
-  root.FilterComparison = { defaults, ComparisonFilters, firWeights, sections };
+  root.FilterComparison = {
+    defaults,
+    ComparisonFilters,
+    firWeights,
+    sections,
+    observerPoles,
+  };
   if (typeof module !== "undefined") module.exports = root.FilterComparison;
 })(typeof window !== "undefined" ? window : globalThis);

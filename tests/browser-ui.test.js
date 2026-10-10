@@ -25,6 +25,7 @@ function element(id = "") {
     classList: { toggle() {}, remove() {} },
     getBoundingClientRect: () => ({ width: 700, height: 450, left: 0, top: 0 }),
     getContext: () => canvas,
+    setPointerCapture() {},
     addEventListener(event, callback) {
       this[event] = callback;
     },
@@ -141,6 +142,7 @@ console.log(
   "Live UI: real-time scheduler, pause, force click, known input, history and mode switching passed",
 );
 
+elements.poleType.value = "real";
 elements.firType.value = "mean";
 elements.iirType.value = "butterworth";
 vm.runInContext(fs.readFileSync("web/filter-ui.js", "utf8"), context);
@@ -173,3 +175,59 @@ run("phase=49;progress=1;draw()");
 console.log(
   "Comparison UI: settings, independent visibility, live and staged history passed",
 );
+
+vm.runInContext(fs.readFileSync("web/pole-ui.js", "utf8"), context);
+elements["demo-mode"].value = "live";
+elements["demo-mode"].onchange();
+elements.poleType.value = "complex";
+elements.poleType.change({ target: elements.poleType });
+assert.equal(elements["real-pole-controls"].hidden, true);
+assert.equal(elements["complex-pole-controls"].hidden, false);
+elements["show-pole-map"].checked = true;
+elements["show-pole-map"].change();
+elements["pole-map"].pointerdown({ clientX: 700, clientY: 0, pointerId: 1 });
+elements["pole-map"].pointermove({ clientX: 650, clientY: 0, pointerId: 1 });
+elements["pole-map"].pointerup();
+assert.equal(+elements.poleRadius.value, 0.99);
+assert.ok(
+  run(
+    "FilterComparison.observerPoles(filterSettings()).points.every(p=>Math.hypot(...p)<=.99000001)",
+  ),
+);
+assert.match(elements["pole-readout"].textContent, /j/);
+assert.ok(run("live.comparison.p.poleType === 'complex'"));
+console.log(
+  "Pole UI: conjugate mode, drag placement, radius cap and observer settings passed",
+);
+elements.poleType.value = "real";
+elements.pole1.value = "0.2";
+elements.pole2.value = "0.8";
+run("setPolePoint(0.2,0.4,0,true)");
+assert.equal(
+  elements.poleType.value,
+  "real",
+  "separate real poles cannot drag off-axis",
+);
+assert.equal(+elements.pole1.value, 0.2);
+elements.pole1.value = "0.5";
+elements.pole2.value = "0.52";
+run("setPolePoint(0.51,0.4,0,true)");
+assert.equal(
+  elements.poleType.value,
+  "complex",
+  "nearby real poles can form conjugate pair",
+);
+run("setPolePoint(0.6,0.01,0,true)");
+assert.equal(
+  elements.poleType.value,
+  "real",
+  "return to real axis merges conjugate pair",
+);
+assert.equal(elements.pole1.value, elements.pole2.value);
+console.log(
+  "Pole drag: separated real constraint, close-pair transition and merging passed",
+);
+
+let stoppedPoleKey = false;
+elements["pole-map"].keydown({key:"ArrowLeft",preventDefault(){},stopPropagation(){stoppedPoleKey=true;}});
+assert.ok(stoppedPoleKey,"pole keyboard control must not trigger playback stepping");
