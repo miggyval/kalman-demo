@@ -29,6 +29,7 @@
           <option value="amber">Amber</option>
         </select>
       </div>
+      <button id="reset-settings" type="button">Reset settings</button>
       <span>METR6203</span
       ><span id="status" aria-live="polite">k = 1 · Prediction</span>
     </header>
@@ -444,6 +445,24 @@
         </section>
       </aside>
     </main>
+    <dialog
+      id="reset-settings-dialog"
+      aria-labelledby="reset-settings-title"
+      aria-describedby="reset-settings-description"
+    >
+      <h2 id="reset-settings-title">Reset all settings?</h2>
+      <p id="reset-settings-description">
+        Restore controls, filters, visibility and appearance to their defaults,
+        and restart the live demo.
+      </p>
+      <div class="dialog-actions">
+        <button id="cancel-settings-reset" type="button" autofocus>
+          Cancel</button
+        ><button id="confirm-settings-reset" type="button">
+          Reset settings
+        </button>
+      </div>
+    </dialog>
     <script src="vendor/katex/katex.min.js"></script>
     <script src="filters.js"></script>
     <script src="model.js"></script>
@@ -453,5 +472,6 @@
     <script src="filter-ui.js"></script>
     <script src="pole-ui.js"></script>
     <script src="theme.js"></script>
+    <script src="settings.js"></script>
   </body>
 </html>

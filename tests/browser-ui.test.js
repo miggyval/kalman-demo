@@ -26,11 +26,22 @@ function element(id = "") {
     getBoundingClientRect: () => ({ width: 700, height: 450, left: 0, top: 0 }),
     getContext: () => canvas,
     setPointerCapture() {},
+    dispatchEvent(event) {
+      if (this[event.type]) this[event.type](event);
+    },
+    showModal() {
+      this.open = true;
+    },
+    close() {
+      this.open = false;
+    },
+    focus() {},
     addEventListener(event, callback) {
       this[event] = callback;
     },
     append(...children) {
       this.children = (this.children || []).concat(children);
+      for (const child of children) if (child?.id) elements[child.id] = child;
     },
     checkValidity: () => true,
   };
@@ -47,6 +58,11 @@ elements.scenario.value = "normal";
 elements.speed.value = "1";
 const context = vm.createContext({
   KalmanLab: Lab,
+  Event: class {
+    constructor(type) {
+      this.type = type;
+    }
+  },
   katex: {
     render: (tex, e, o) => {
       e.innerHTML = katex.renderToString(tex, o);
@@ -229,5 +245,38 @@ console.log(
 );
 
 let stoppedPoleKey = false;
-elements["pole-map"].keydown({key:"ArrowLeft",preventDefault(){},stopPropagation(){stoppedPoleKey=true;}});
-assert.ok(stoppedPoleKey,"pole keyboard control must not trigger playback stepping");
+elements["pole-map"].keydown({
+  key: "ArrowLeft",
+  preventDefault() {},
+  stopPropagation() {
+    stoppedPoleKey = true;
+  },
+});
+assert.ok(
+  stoppedPoleKey,
+  "pole keyboard control must not trigger playback stepping",
+);
+
+vm.runInContext(fs.readFileSync("web/settings.js", "utf8"), context);
+elements.mass.value = "3";
+elements["reset-settings"].onclick();
+assert.equal(elements["reset-settings-dialog"].open, true);
+elements["cancel-settings-reset"].onclick();
+assert.equal(elements.mass.value, "3", "cancel preserves settings");
+elements["reset-settings"].onclick();
+elements["confirm-settings-reset"].onclick();
+assert.equal(elements["reset-settings-dialog"].open, false);
+assert.equal(elements.mass.value, "1");
+assert.equal(elements.poleType.value, "real");
+assert.equal(elements["demo-mode"].value, "live");
+assert.equal(elements["color-theme"].value, "uq");
+assert.equal(run("livePlaying"), true);
+assert.equal(run("live.k"), 1);
+assert.equal(run("live.forces.length"), 0);
+assert.equal(run("live.comparison.p.pole1"), 0.85);
+assert.equal(run("visible.fir"), true);
+assert.equal(elements["show-pole-map"].checked, false);
+assert.equal(elements["comparison"].hidden, true);
+console.log(
+  "Settings reset: confirmation, cancellation, defaults and clean live restart passed",
+);
