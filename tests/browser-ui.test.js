@@ -14,6 +14,7 @@ const elements = {};
 function element(id = "") {
   return {
     id,
+    min:"",max:"",
     dataset: {},
     style: {},
     hidden: false,
@@ -51,6 +52,9 @@ for (const match of html.matchAll(/<[^>]*\bid="([^"]+)"[^>]*>/g)) {
   const e = element(match[1]);
   elements[e.id] = e;
   e.value = match[0].match(/\bvalue="([^"]+)"/)?.[1] || "";
+  e.min=match[0].match(/\bmin="([^"]+)"/)?.[1] || "";
+  e.max=match[0].match(/\bmax="([^"]+)"/)?.[1] || "";
+  e.type = match[0].match(/\btype="([^"]+)"/)?.[1] || "";
   e.checked = /\bchecked\b/.test(match[0]);
   e.hidden = /\bhidden\b/.test(match[0]);
 }
@@ -58,6 +62,8 @@ elements.scenario.value = "normal";
 elements.speed.value = "1";
 const context = vm.createContext({
   KalmanLab: Lab,
+  TrailRenderer: require("../web/trails.js"),
+  PlotCamera: require("../web/camera.js"),
   Event: class {
     constructor(type) {
       this.type = type;
@@ -290,6 +296,36 @@ console.log(
   "Disturbance UI: enable, tuning, history and mode switching passed",
 );
 
+vm.runInContext(fs.readFileSync("web/trail-ui.js", "utf8"), context);
+const trailTime = run("live.time");
+elements.limitTrail.checked = true;
+elements.limitTrail.change();
+elements.trailLength.value = "1.5";
+elements.trailLength.input();
+elements.fadeTrail.checked = true;
+elements.fadeTrail.change();
+elements.trailStyle.value = "dotted";
+elements.trailStyle.change();
+elements.trailWidth.value = "3";
+elements.trailWidth.input();
+assert.equal(elements.trailLength.disabled, false);
+assert.equal(elements.trailHalfLife.disabled, false);
+assert.equal(elements.trailDash.disabled, true);
+assert.equal(run("trailSettings().trailLength"), 1.5);
+assert.equal(run("trailSettings().trailWidth"), 3);
+assert.equal(
+  run("live.time"),
+  trailTime,
+  "trail controls preserve motion and filter state",
+);
+elements["demo-mode"].value = "staged";
+elements["demo-mode"].onchange();
+run("phase=49;progress=1;draw()");
+console.log(
+  "Trail UI: length, fade, style, thickness, live and staged drawing passed",
+);
+
+vm.runInContext(fs.readFileSync("web/camera-ui.js", "utf8"), context);
 vm.runInContext(fs.readFileSync("web/settings.js", "utf8"), context);
 elements.mass.value = "3";
 elements["reset-settings"].onclick();
@@ -317,3 +353,8 @@ console.log(
 assert.equal(elements.estimateForce.checked, false);
 assert.equal(run("live.p.estimateForce"), false);
 assert.equal(elements.forceDrift.value, "10");
+
+assert.equal(elements.limitTrail.checked, false);
+assert.equal(elements.fadeTrail.checked, false);
+assert.equal(elements.trailStyle.value, "auto");
+assert.equal(elements.trailWidth.value, "1");

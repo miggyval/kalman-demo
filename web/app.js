@@ -124,6 +124,25 @@ function canvasSetup(canvas) {
   ctx.clearRect(0, 0, w, h);
   return { ctx, w, h };
 }
+function trailSettings() {
+  const settings = {
+    limitTrail: $("limitTrail").checked,
+    fadeTrail: $("fadeTrail").checked,
+    trailStyle: $("trailStyle").value || "auto",
+  };
+  for (const id of [
+    "trailLength",
+    "trailHalfLife",
+    "trailWidth",
+    "trailDash",
+    "trailGap",
+  ])
+    settings[id] = +$(id).value;
+  return settings;
+}
+function drawTrail(ctx, samples, pos, now, color, dashed = false) {
+  TrailRenderer.draw(ctx, samples, pos, now, trailSettings(), color, dashed);
+}
 function ellipsePoints(x, P) {
   const { eigenvalues, eigenvectors } = Lab.ellipse(P);
   return Array.from({ length: 81 }, (_, i) => {
@@ -268,31 +287,43 @@ function plot() {
   ctx.rect(left, top, pw, ph);
   ctx.clip();
   const past = simulation.rows.slice(0, row.k - 1);
+  const trailTime = frame.prediction
+    ? (row.k - 1 + progress) * simulation.parameters.dt
+    : row.time;
+  const trailSample = (point, time) => ({ point, time });
   if (visible.trails) {
     if (visible.truth)
-      path(
-        [simulation.initial.truth, ...past.map((r) => r.truth), frame.truth],
+      drawTrail(
+        ctx,
+        [
+          trailSample(simulation.initial.truth, 0),
+          ...past.map((r) => trailSample(r.truth, r.time)),
+          trailSample(frame.truth, trailTime),
+        ],
+        pos,
+        trailTime,
         palette.truth,
-        false,
-        1,
       );
     if (visible.posterior)
-      path(
+      drawTrail(
+        ctx,
         [
-          simulation.initial.x,
-          ...past.map((r) => r.posterior.x),
-          ...(frame.prediction ? [] : [frame.x]),
+          trailSample(simulation.initial.x, 0),
+          ...past.map((r) => trailSample(r.posterior.x, r.time)),
+          ...(frame.prediction ? [] : [trailSample(frame.x, trailTime)]),
         ],
+        pos,
+        trailTime,
         palette.posterior,
-        false,
-        1,
       );
-    if (visible.prior && past.length)
-      path(
-        past.map((r) => r.prior.x),
+    if (visible.prior)
+      drawTrail(
+        ctx,
+        past.map((r) => trailSample(r.prior.x, r.time)),
+        pos,
+        trailTime,
         palette.prior,
         true,
-        1,
       );
   }
   if (visible.measurement && row.y !== null && !frame.prediction)
@@ -346,8 +377,13 @@ function plot() {
       continue;
     }
     if (visible.trails)
-      path(
-        simulation.rows.slice(0, index + 1).map((r) => r.comparisons[key][0]),
+      drawTrail(
+        ctx,
+        simulation.rows
+          .slice(0, index + 1)
+          .map((r) => trailSample(r.comparisons[key][0], r.time)),
+        pos,
+        trailTime,
         palette[key],
         true,
       );

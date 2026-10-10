@@ -55,6 +55,7 @@ function liveParameters(resetInitial = false) {
   else liveDraw();
   sliderValues();
 }
+const liveCamera=new PlotCamera.Camera();
 function liveReset() {
   const p = typeof filterSettings === "function" ? filterSettings() : {};
   for (const id of parameterIds) p[id] = +$(id).value;
@@ -65,6 +66,7 @@ function liveReset() {
   p.matched = $("matched").checked;
   p.scenario = $("scenario").value;
   live = new LiveSimulation(p);
+  liveCamera.reset(live.origin);
   live.step();
   liveCursor = 0;
   liveDebt = 0;
@@ -100,27 +102,14 @@ function liveDraw() {
     top = 20,
     right = 15,
     bottom = 40;
-  const half = Math.max(
-    20,
-    live.p.amplitude * 1.1,
-    ...(visible.augmented && row.augmented
-      ? row.augmented.position.map((v, j) => Math.abs(v - live.origin[j]) + 5)
-      : []),
-    ...row.truth.slice(0, 2).map((v, j) => Math.abs(v - live.origin[j]) + 10),
-    ...["observer", "fir", "iir"]
-      .filter((key) => visible[key] && row.comparisons)
-      .flatMap((key) =>
-        row.comparisons[key].map((a, j) => Math.abs(a[0] - live.origin[j]) + 5),
-      ),
-  );
-  const aspect = (w - left - right) / (h - top - bottom),
-    hx = half * Math.max(1, aspect),
-    hy = half * Math.max(1, 1 / aspect);
+  const half=+$('viewRange').value;
+  const aspect=(w-left-right)/(h-top-bottom),hx=half*Math.max(1,aspect),hy=half*Math.max(1,1/aspect);
+  const center=liveCamera.update(row.truth,hx,hy,row.time,+$('followLag').value);
   liveBounds = {
-    xmin: live.origin[0] - hx,
-    xmax: live.origin[0] + hx,
-    ymin: live.origin[1] - hy,
-    ymax: live.origin[1] + hy,
+    xmin: center[0] - hx,
+    xmax: center[0] + hx,
+    ymin: center[1] - hy,
+    ymax: center[1] + hy,
     left,
     top,
     pw: w - left - right,
@@ -206,24 +195,30 @@ function liveDraw() {
   ctx.rect(left, top, b.pw, b.ph);
   ctx.clip();
   const history = live.history.slice(0, liveCursor + 1);
+  const trail = (rows, position, color, dashed = false) =>
+    drawTrail(
+      ctx,
+      rows.map((r) => ({ time: r.time, point: position(r) })),
+      pos,
+      row.time,
+      color,
+      dashed,
+    );
   if (visible.trails)
     for (const key of ["truth", "prior", "posterior"])
       if (visible[key])
-        path(
-          history.map((r) => r[key]),
-          palette[key],
-          key === "prior",
-        );
+        trail(history, (r) => r[key], palette[key], key === "prior");
   for (const key of ["observer", "fir", "iir"]) {
     if (!visible[key] || !row.comparisons) continue;
     const position = (r) => r.comparisons[key].map((a) => a[0]);
-    if (visible.trails) path(history.map(position), palette[key], true);
+    if (visible.trails) trail(history, position, palette[key], true);
     marker(position(row), palette[key]);
   }
   if (visible.augmented && row.augmented) {
     if (visible.trails)
-      path(
-        history.filter((r) => r.augmented).map((r) => r.augmented.position),
+      trail(
+        history.filter((r) => r.augmented),
+        (r) => r.augmented.position,
         palette.augmented,
         true,
       );
@@ -391,7 +386,7 @@ $("iteration").oninput = () => {
   liveCursor = +$("iteration").value - 1;
   liveDraw();
 };
-$("state-plot").addEventListener("pointerdown", (event) => {
+function applyPlotForce(event) {
   if (demoMode !== "live") return;
   const rect = $("state-plot").getBoundingClientRect(),
     b = liveBounds;
@@ -413,6 +408,11 @@ $("state-plot").addEventListener("pointerdown", (event) => {
     $("force-type").value === "known",
   );
   liveDraw();
+}
+$("state-plot").addEventListener("pointerdown",event=>{
+  if(demoMode!=="live")return;
+  if(event.pointerType==="touch")cameraTouchStart(event);
+  else applyPlotForce(event);
 });
 $("clear-forces").onclick = () => {
   live.forces = [];
@@ -429,6 +429,7 @@ $("demo-mode").onchange = () => {
   demoMode = $("demo-mode").value;
   document.body.classList.toggle("live", demoMode === "live");
   $("live-controls").hidden = demoMode !== "live";
+  $("camera-controls").hidden=demoMode!=="live";
   $("scenario").options[1].textContent =
     demoMode === "live" ? "Gap: 4–6 s every 8 s" : "Gap: k = 11–15";
   $("scenario").options[2].textContent =

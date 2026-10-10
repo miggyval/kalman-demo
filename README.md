@@ -70,6 +70,10 @@ FIR/IIR process position measurements only and hold their output/memory during g
 
 Changing comparison settings resets only the edited filter's memory in live mode, initialized from the current KF state. Other comparison filters keep their state. Physics and KF playback continue. Existing history retains its original estimates, so the eight-second RMSE window may span a configuration change. Reset starts a fresh comparison. State-space mode regenerates the comparison estimates using the stored measurements. Visibility toggles only affect display; filter state keeps advancing.
 
+**Trail appearance** controls all trajectory trails in both views. Enable **Limit trail length** for a 0.1–8 second window, or **Fade older points** for exponential dimming with a 0.1–8 second half-life. These can be used together. Age is measured against the displayed simulation sample, so pause and backwards playback preserve the appearance. Live mode retains at most eight seconds of history even with the length limit off.
+
+Choose **By series** to keep the existing solid/dashed distinction, or apply Solid, Dashed, Dotted, or Dash-dot to all trails. Sliders adjust thickness, dash length, and gap in CSS pixels. Colours remain tied to the legend. These controls change drawing only; they do not restart the simulation or affect estimates, covariance ellipses, force arrows, or error plots. Reset settings restores unlimited retained history, no fade, By series, 1 px thickness, and 4 px dashes/gaps.
+
 The mathematics is rendered with [KaTeX](https://katex.org/docs/browser.html), version 0.19.0. Its MIT licence is preserved in `web/vendor/katex/LICENSE`.
 
 ## Python interactive demo
@@ -138,6 +142,7 @@ node tests/browser-ui.test.js
 node tests/live-model.test.js
 node tests/filters.test.js
 node tests/augmented-model.test.js
+node tests/trails.test.js
 ```
 
 Tests cover repeatability, tracking error, known acceleration, the SMA window, IIR initialization, zero noise, covariance stability under bursts, Euler dynamics, Joseph updates, eigenvalue ellipses, stored playback, LaTeX rendering, visibility toggles, parameter changes, and missing measurements.

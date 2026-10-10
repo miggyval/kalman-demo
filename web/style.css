@@ -748,3 +748,37 @@ header > span,
 #disturbance-model {
   font-size: 11px;
 }
+
+.trail-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 10px 0;
+}
+.trail-controls {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 14px 20px;
+  padding: 8px 0;
+}
+.trail-controls label {
+  color: var(--muted);
+}
+.trail-controls input,
+.trail-controls select {
+  display: block;
+  width: 100%;
+}
+.trail-controls output {
+  float: right;
+}
+#trail-settings small {
+  color: var(--muted);
+  font-size: 10px;
+}
+
+.camera-controls { display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px; padding:8px 0 12px; }
+.camera-controls label { display:flex; flex-wrap:wrap; align-items:center; gap:6px; color:var(--muted); font-size:11px; }
+.camera-controls input { width:95px; }
+.camera-controls small { flex-basis:100%; color:var(--muted); font-size:10px; }
+body.live #state-plot { touch-action:none; }

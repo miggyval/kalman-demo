@@ -4,6 +4,8 @@ function restoreSettings() {
     ...KalmanLab.defaults,
     ...FilterComparison.defaults,
     ...AugmentedKF.defaults,
+    ...TrailRenderer.defaults,
+    ...PlotCamera.defaults,
     mass: 1,
     amplitude: 20,
     period: 6,
@@ -25,6 +27,11 @@ function restoreSettings() {
     visible[key] = true;
     $("show-" + key).checked = true;
   }
+  $("limitTrail").checked = false;
+  $("fadeTrail").checked = false;
+  $("trail-settings").open = false;
+  trailLabels();
+  cameraLabels();
   $("estimateForce").checked = false;
   $("disturbance-settings").open = false;
   $("disturbance-panel").hidden = true;
