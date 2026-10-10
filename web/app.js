@@ -8,6 +8,8 @@ const palette = {
   measurement: "#9391a2",
   iir: "#f9b86b",
   sma: "#7bbfac",
+  fir: "#7bbfac",
+  observer: "#ef8faa",
   grid: "#332c3c",
   muted: "#b4aabb",
   border: "#63556f",
@@ -22,6 +24,9 @@ const visible = {
   measurement: true,
   arrows: true,
   trails: true,
+  observer: true,
+  fir: true,
+  iir: true,
 };
 const visibilityLabels = {
   truth: "True state",
@@ -32,15 +37,20 @@ const visibilityLabels = {
   measurement: "Measurement",
   arrows: "Arrows",
   trails: "Trails",
+  observer: "Luenberger",
+  fir: "FIR",
+  iir: "IIR",
 };
 for (const [key, label] of Object.entries(visibilityLabels)) {
   const wrapper = document.createElement("label"),
     input = document.createElement("input");
+  if (["observer", "fir", "iir"].includes(key)) wrapper.className = key;
   input.type = "checkbox";
   input.checked = true;
   input.id = "show-" + key;
   input.addEventListener("change", () => {
     visible[key] = input.checked;
+    if (demoMode === "staged" && simulation) calculateBounds();
     draw();
   });
   wrapper.append(input, document.createTextNode(label));
@@ -131,6 +141,9 @@ function calculateBounds() {
       ...ellipsePoints(row.prior.x, row.prior.P),
       ...ellipsePoints(row.posterior.x, row.posterior.P),
     );
+    if (row.comparisons)
+      for (const [key, axes] of Object.entries(row.comparisons))
+        if (visible[key]) points.push(axes[0]);
     if (row.y !== null) points.push([row.y, row.truth[1]]);
   }
   const hs = points.map((p) => p[0]),
@@ -320,6 +333,23 @@ function plot() {
       "diamond",
     );
   if (visible.truth) marker(frame.truth, palette.truth, "circle");
+  for (const key of ["observer", "fir", "iir"]) {
+    if (!visible[key]) continue;
+    const index = Math.floor(phase / 2) - (frame.prediction ? 1 : 0);
+    const sample = simulation.rows[index];
+    if (!sample?.comparisons) {
+      if (simulation.rows[0].comparisons)
+        marker(simulation.initial.x, palette[key], "square");
+      continue;
+    }
+    if (visible.trails)
+      path(
+        simulation.rows.slice(0, index + 1).map((r) => r.comparisons[key][0]),
+        palette[key],
+        true,
+      );
+    marker(sample.comparisons[key][0], palette[key], "square");
+  }
   ctx.restore();
 }
 function numbers() {
@@ -385,7 +415,13 @@ function comparison() {
     rows.push({ ...f.row, posterior: { x: f.x }, truth: f.truth });
   const all = [
       simulation.initial.truth[0],
-      ...rows.flatMap((r) => [r.truth[0], r.posterior.x[0], r.iir, r.sma]),
+      ...rows.flatMap((r) => [
+        r.truth[0],
+        r.posterior.x[0],
+        ...(r.comparisons
+          ? Object.values(r.comparisons).map((a) => a[0][0])
+          : [r.iir, r.sma]),
+      ]),
     ],
     lo = Math.min(...all) - 2,
     hi = Math.max(...all) + 2;
@@ -404,8 +440,13 @@ function comparison() {
   for (const [key, color, get] of [
     ["True", palette.truth, (r) => r.truth[0]],
     ["KF", palette.posterior, (r) => r.posterior.x[0]],
-    ["IIR", palette.iir, (r) => r.iir],
-    ["SMA", palette.sma, (r) => r.sma],
+    ...["observer", "fir", "iir"]
+      .filter((key) => visible[key] && rows[0]?.comparisons)
+      .map((key) => [
+        key === "observer" ? "Luenberger" : key.toUpperCase(),
+        palette[key],
+        (r) => r.comparisons[key][0][0],
+      ]),
   ]) {
     ctx.strokeStyle = color;
     ctx.beginPath();
@@ -418,7 +459,7 @@ function comparison() {
     ctx.fillStyle = color;
     ctx.fillText(
       key,
-      w - 180 + ["True", "KF", "IIR", "SMA"].indexOf(key) * 43,
+      w - 330 + ["True", "KF", "Luenberger", "FIR", "IIR"].indexOf(key) * 65,
       12,
     );
   }
@@ -468,6 +509,7 @@ function regenerate(keepPosition = false) {
   const generated = Lab.generate(parameters);
   stop();
   simulation = generated;
+  if (typeof prepareStagedFilters === "function") prepareStagedFilters();
   if (!keepPosition) {
     phase = 0;
     progress = 0;

@@ -11,13 +11,13 @@ python3 -m http.server 8000 --bind 127.0.0.1
 # Open http://localhost:8000/web/
 ```
 
-![Browser state-space demo](docs/browser-lab.png)
+![Browser filter comparison](docs/browser-filters.png)
 
 **Live motion** is the default view. It runs continuously at wall-clock speed when speed is 1×, with a periodic reference path and a damped controller. The state is `[px, py, vx, vy]`; measurements contain x/y position only. The controller acceleration and gravity are known inputs. Process disturbances are independent acceleration noise, propagated through `G Q Gᵀ`.
 
 Click inside the plot to apply a force pointing from the current true position towards the clicked position. Set force magnitude in newtons, duration in seconds, and mass in kilograms using sliders. **Known input** supplies the resulting acceleration `F/m` to both the plant and filter prediction; **Disturbance** supplies it only to the plant. The force arrow is scaled by 0.2 metres per newton. Repeated clicks add forces; Clear forces cancels them.
 
-All numerical settings use sliders. Noise, gravity, timestep, mass, periodic amplitude/period, damping, and assumed noise change the ongoing run. Initial height/velocity/covariance sliders restart from the chosen initial conditions when released. Pause freezes simulation time and force expiry; Previous/Next and the iteration slider inspect the stored last eight seconds without regenerating measurements. Resuming returns to the newest state. Sensor gaps and outliers can repeat every eight seconds; smoother comparison shows positional errors and RMSE.
+All numerical settings use sliders. Noise, gravity, timestep, mass, periodic amplitude/period, damping, and assumed noise change the ongoing run. Initial height/velocity/covariance sliders restart from the chosen initial conditions when released. Pause freezes simulation time and force expiry; Previous/Next and the iteration slider inspect the stored last eight seconds without regenerating measurements. Resuming returns to the newest state. Sensor gaps and outliers can repeat every eight seconds; filter comparison shows positional errors and RMSE for the enabled estimates.
 
 Real-time playback uses a fixed-step accumulator driven by elapsed animation-frame time. The default timestep is 0.02 seconds, and mathematical values redraw at up to 20 Hz. Long browser stalls are limited to 0.25 seconds of catch-up per frame; a suspended/background tab is not treated as a reliable wall-clock timer.
 
@@ -39,7 +39,15 @@ The implemented model is forward Euler:
 
 Changing a valid parameter regenerates the fixed-seed data and resets playback. Measurement standard deviations must be positive so the displayed ordinary `S⁻¹` exists, including zero initial covariance and zero process noise.
 
-**Additional controls** retains noise-assumption mismatch, a stored measurement gap at iterations 11–15, a sensor outlier, and an optional height-time comparison with IIR/SMA. A missing measurement skips correction; state and covariance remain at their predicted values and update equations are inactive. Outliers change the chosen measurement, not the generated true trajectory. Matching noise is enabled by default; when disabled the algorithm panel displays the filter's assumed Q/R. Browser IIR uses `alpha = 0.8`, and SMA uses five samples. These are position smoothers, so their comparison uses a height-time plot rather than invented velocity estimates.
+**Additional controls** retains noise-assumption mismatch, a stored measurement gap at iterations 11–15, a sensor outlier, and an optional height-time comparison with IIR/SMA. A missing measurement skips correction; state and covariance remain at their predicted values and update equations are inactive. Outliers change the chosen measurement, not the generated true trajectory. Matching noise is enabled by default; when disabled the algorithm panel displays the filter's assumed Q/R. **Comparison filters** contains the browser filter settings. Each estimate has a visibility checkbox and matching legend colour:
+
+- **Luenberger:** two real discrete poles from 0 to 0.99. Each axis predicts with the same known acceleration as the KF, then corrects position/velocity with `L = [1 − p1 p2, (1 + p1 p2 − p1 − p2)/dt]ᵀ`. These are the poles of `(I − LC)A`; they are not continuous-time poles. Gaps skip correction.
+- **FIR:** moving average, triangular average, Hann average, or Hamming-windowed sinc low-pass. Order N uses N + 1 taps, from 2 to 61. Weights sum to one; startup pads with the first measurement. Symmetric taps introduce a delay of N/2 samples.
+- **IIR:** Butterworth low-pass (first/second-order section cascade) or cascaded exponential smoothing, orders 1–8. Both use a configurable −3 dB cutoff for the complete filter. The cutoff slider is a fraction of Nyquist; frequency in Hz is `cutoff / (2 dt)`.
+
+FIR/IIR process position measurements only and hold their output/memory during gaps. Live mode draws their x/y trajectories; the state-space view uses the finite difference of filtered height as a velocity proxy, which can amplify noise. The separate height-time comparison avoids that proxy. Neither smoother knows control forces. The Luenberger observer knows controller acceleration, gravity, and forces marked Known input, just like the KF; disturbances remain unknown.
+
+Changing comparison settings resets only the edited filter's memory in live mode, initialized from the current KF state. Other comparison filters keep their state. Physics and KF playback continue. Existing history retains its original estimates, so the eight-second RMSE window may span a configuration change. Reset starts a fresh comparison. State-space mode regenerates the comparison estimates using the stored measurements. Visibility toggles only affect display; filter state keeps advancing.
 
 The mathematics is rendered with [KaTeX](https://katex.org/docs/browser.html), version 0.19.0. Its MIT licence is preserved in `web/vendor/katex/LICENSE`.
 
@@ -107,6 +115,7 @@ python -m unittest discover -s tests -v
 node tests/browser-model.test.js    # Optional Node.js checks
 node tests/browser-ui.test.js
 node tests/live-model.test.js
+node tests/filters.test.js
 ```
 
 Tests cover repeatability, tracking error, known acceleration, the SMA window, IIR initialization, zero noise, covariance stability under bursts, Euler dynamics, Joseph updates, eigenvalue ellipses, stored playback, LaTeX rendering, visibility toggles, parameter changes, and missing measurements.

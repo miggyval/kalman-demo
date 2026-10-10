@@ -16,11 +16,17 @@
         <option value="staged">State space · 25 steps</option>
       </select>
       <div class="appearance" aria-label="Appearance">
-        <label for="color-mode">Mode</label><select id="color-mode">
-          <option value="dark">Dark</option><option value="light">Light</option><option value="system">System</option>
+        <label for="color-mode">Mode</label
+        ><select id="color-mode">
+          <option value="dark">Dark</option>
+          <option value="light">Light</option>
+          <option value="system">System</option>
         </select>
-        <label for="color-theme">Theme</label><select id="color-theme">
-          <option value="uq">UQ purple</option><option value="ocean">Ocean</option><option value="amber">Amber</option>
+        <label for="color-theme">Theme</label
+        ><select id="color-theme">
+          <option value="uq">UQ purple</option>
+          <option value="ocean">Ocean</option>
+          <option value="amber">Amber</option>
         </select>
       </div>
       <span>METR6203</span
@@ -220,6 +226,100 @@
           ><output id="applied-force"></output
           ><button id="clear-forces" type="button">Clear forces</button>
         </div>
+        <details id="filter-settings">
+          <summary>Comparison filters</summary>
+          <label class="check comparison-toggle"
+            ><input id="compare" type="checkbox" /> Comparison plot</label
+          >
+          <div class="filter-controls">
+            <fieldset>
+              <legend>Luenberger observer</legend>
+              <label
+                >Pole 1<input
+                  id="pole1"
+                  type="range"
+                  min="0"
+                  max="0.99"
+                  step="0.01"
+                  value="0.85" /><output id="pole1-value"></output
+              ></label>
+              <label
+                >Pole 2<input
+                  id="pole2"
+                  type="range"
+                  min="0"
+                  max="0.99"
+                  step="0.01"
+                  value="0.90" /><output id="pole2-value"></output
+              ></label>
+              <small>Discrete poles · prediction and position correction</small>
+            </fieldset>
+            <fieldset>
+              <legend>FIR</legend>
+              <label
+                >Type<select id="firType">
+                  <option value="mean">Moving average</option>
+                  <option value="triangular">Triangular average</option>
+                  <option value="hann">Hann average</option>
+                  <option value="sinc">Windowed-sinc low-pass</option>
+                </select></label
+              >
+              <label
+                >Order<input
+                  id="firOrder"
+                  type="range"
+                  min="1"
+                  max="60"
+                  step="1"
+                  value="10" /><output id="firOrder-value"></output
+              ></label>
+              <label
+                >Cutoff / Nyquist<input
+                  id="firCutoff"
+                  type="range"
+                  min="0.01"
+                  max="0.95"
+                  step="0.01"
+                  value="0.15" /><output id="firCutoff-value"></output
+              ></label>
+              <small
+                >Order N = N + 1 taps · cutoff for windowed sinc<br />State-space
+                velocity: finite difference</small
+              >
+            </fieldset>
+            <fieldset>
+              <legend>IIR</legend>
+              <label
+                >Type<select id="iirType">
+                  <option value="butterworth">Butterworth low-pass</option>
+                  <option value="exponential">Cascaded exponential</option>
+                </select></label
+              >
+              <label
+                >Order<input
+                  id="iirOrder"
+                  type="range"
+                  min="1"
+                  max="8"
+                  step="1"
+                  value="2" /><output id="iirOrder-value"></output
+              ></label>
+              <label
+                >Cutoff / Nyquist<input
+                  id="iirCutoff"
+                  type="range"
+                  min="0.01"
+                  max="0.95"
+                  step="0.01"
+                  value="0.15" /><output id="iirCutoff-value"></output
+              ></label>
+              <small
+                >Cutoff uses the current sampling rate<br />State-space
+                velocity: finite difference</small
+              >
+            </fieldset>
+          </div>
+        </details>
         <details id="experiments">
           <summary>Additional controls</summary>
           <div class="experiment-controls">
@@ -255,15 +355,12 @@
                 value="3"
                 disabled /><output id="assumedSensor-value"></output
             ></label>
-            <label class="check"
-              ><input id="compare" type="checkbox" /> Smoother comparison</label
-            >
           </div>
         </details>
         <canvas
           id="comparison"
           hidden
-          aria-label="Height estimates: Kalman, IIR and moving average"
+          aria-label="Filter comparison: Kalman, Luenberger observer, FIR and IIR"
         ></canvas>
         <div class="plot-meta">
           <span>Ellipse: Mahalanobis distance = 1</span
@@ -306,10 +403,12 @@
       </aside>
     </main>
     <script src="vendor/katex/katex.min.js"></script>
+    <script src="filters.js"></script>
     <script src="model.js"></script>
     <script src="live-model.js"></script>
     <script src="app.js"></script>
     <script src="live.js"></script>
+    <script src="filter-ui.js"></script>
     <script src="theme.js"></script>
   </body>
 </html>

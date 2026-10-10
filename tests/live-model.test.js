@@ -1,5 +1,6 @@
 const assert = require("node:assert/strict");
 globalThis.KalmanLab = require("../web/model.js");
+globalThis.FilterComparison = require("../web/filters.js");
 const Live = require("../web/live-model.js");
 const p = {
   dt: 0.02,
@@ -45,7 +46,13 @@ for (let i = 0; i < 3000; i++) {
 assert.ok(periodic.history.length <= 402, "history bounded to eight seconds");
 // The slider limits keep the Euler controller stable at the largest timestep.
 for (const damping of [0.5, 8]) {
-  const extreme = new Live({ dt: 0.1, period: 4, damping, amplitude: 40, gravity: 30 });
+  const extreme = new Live({
+    dt: 0.1,
+    period: 4,
+    damping,
+    amplitude: 40,
+    gravity: 30,
+  });
   for (let i = 0; i < 3000; i++) {
     const row = extreme.step();
     assert.ok(row.truth.every(Number.isFinite));

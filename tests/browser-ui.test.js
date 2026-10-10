@@ -58,6 +58,7 @@ const context = vm.createContext({
   document: {
     body: element(),
     getElementById: (id) => elements[id],
+    querySelector: () => element(),
     createElement: () => element(),
     createTextNode: (s) => s,
     addEventListener() {},
@@ -107,6 +108,8 @@ console.log(
   "Browser integration: all 50 stages, interpolation, LaTeX, visibility, backwards stepping, parameter regeneration, gaps, outliers and comparison passed",
 );
 
+vm.runInContext(fs.readFileSync("web/filters.js", "utf8"), context);
+context.FilterComparison = context.window.FilterComparison;
 vm.runInContext(fs.readFileSync("web/live-model.js", "utf8"), context);
 context.LiveSimulation = context.window.LiveSimulation;
 elements["demo-mode"].value = "live";
@@ -136,4 +139,37 @@ elements["demo-mode"].onchange();
 assert.equal(run("demoMode"), "live");
 console.log(
   "Live UI: real-time scheduler, pause, force click, known input, history and mode switching passed",
+);
+
+elements.firType.value = "mean";
+elements.iirType.value = "butterworth";
+vm.runInContext(fs.readFileSync("web/filter-ui.js", "utf8"), context);
+elements.pole1.value = "0.7";
+const unchangedIir = run(
+  "JSON.stringify(live.comparison.axes.map(a=>a.stages))",
+);
+elements.pole1.input({ target: elements.pole1 });
+assert.equal(
+  run("JSON.stringify(live.comparison.axes.map(a=>a.stages))"),
+  unchangedIir,
+);
+assert.equal(run("live.comparison.p.pole1"), 0.7);
+elements.next.onclick();
+assert.ok(
+  run(
+    "live.history.at(-1).comparisons.observer.every(a => a.every(Number.isFinite))",
+  ),
+);
+for (const key of ["observer", "fir", "iir"]) run(`visible.${key}=true`);
+run("draw()");
+elements["demo-mode"].value = "staged";
+elements["demo-mode"].onchange();
+assert.equal(run("simulation.rows[0].comparisons.observer.length"), 1);
+elements.firOrder.value = "20";
+elements.firOrder.input();
+assert.equal(run("filterSettings().firOrder"), 20);
+run("phase=0;progress=0;draw()");
+run("phase=49;progress=1;draw()");
+console.log(
+  "Comparison UI: settings, independent visibility, live and staged history passed",
 );

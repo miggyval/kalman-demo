@@ -27,6 +27,10 @@
         0,
         this.p.pVelocity,
       ]);
+      this.comparison = new FilterComparison.ComparisonFilters(
+        this.estimates,
+        this.p,
+      );
       this.forces = [];
       this.history = [];
       this.iir = this.truth.slice(0, 2);
@@ -124,6 +128,11 @@
           ? this.samples.reduce((s, z) => s + z[j], 0) / this.samples.length
           : this.truth[j],
       );
+      const comparisons = this.comparison.step(
+        observations,
+        d,
+        control.map((v, j) => v + known[j]),
+      );
       this.time += d;
       this.k++;
       const state = (axes) => [
@@ -173,6 +182,7 @@
         Q: (p.matched === false ? p.assumedProcess : p.processStd) ** 2,
         R: (p.matched === false ? p.assumedSensor : p.sensorStd) ** 2,
         missing,
+        comparisons,
         iir: this.iir.slice(),
         sma,
       };

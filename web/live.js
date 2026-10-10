@@ -54,7 +54,7 @@ function liveParameters(resetInitial = false) {
   sliderValues();
 }
 function liveReset() {
-  const p = {};
+  const p = typeof filterSettings === "function" ? filterSettings() : {};
   for (const id of parameterIds) p[id] = +$(id).value;
   for (const id of ["mass", "amplitude", "period", "damping"])
     p[id] = +$(id).value;
@@ -100,6 +100,11 @@ function liveDraw() {
     20,
     live.p.amplitude * 1.1,
     ...row.truth.slice(0, 2).map((v, j) => Math.abs(v - live.origin[j]) + 10),
+    ...["observer", "fir", "iir"]
+      .filter((key) => visible[key] && row.comparisons)
+      .flatMap((key) =>
+        row.comparisons[key].map((a, j) => Math.abs(a[0] - live.origin[j]) + 5),
+      ),
   );
   const aspect = (w - left - right) / (h - top - bottom),
     hx = half * Math.max(1, aspect),
@@ -202,10 +207,21 @@ function liveDraw() {
           palette[key],
           key === "prior",
         );
+  for (const key of ["observer", "fir", "iir"]) {
+    if (!visible[key] || !row.comparisons) continue;
+    const position = (r) => r.comparisons[key].map((a) => a[0]);
+    if (visible.trails) path(history.map(position), palette[key], true);
+    marker(position(row), palette[key]);
+  }
   if (visible.measurement)
     for (const r of history.slice(-80))
       if (!r.missing) {
-        ctx.fillStyle=palette.measurement;ctx.globalAlpha=.5;ctx.beginPath();ctx.arc(...pos(r.y),1.7,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1;
+        ctx.fillStyle = palette.measurement;
+        ctx.globalAlpha = 0.5;
+        ctx.beginPath();
+        ctx.arc(...pos(r.y), 1.7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
       }
   if (visible.priorCov) covariance(row.prior, row.Pprior, palette.prior, true);
   if (visible.postCov)
@@ -267,14 +283,25 @@ function liveDraw() {
 }
 function liveComparison(rows) {
   const { ctx, w, h } = canvasSetup($("comparison"));
+  const keys = [
+    "posterior",
+    ...["observer", "fir", "iir"].filter((key) => visible[key]),
+  ];
   const errors = rows.map((r) =>
-      ["posterior", "iir", "sma"].map((key) =>
-        Math.hypot(r[key][0] - r.truth[0], r[key][1] - r.truth[1]),
+      keys.map((key) =>
+        Math.hypot(
+          ...[0, 1].map(
+            (j) =>
+              (key === "posterior"
+                ? r.posterior[j]
+                : r.comparisons[key][j][0]) - r.truth[j],
+          ),
+        ),
       ),
     ),
     max = Math.max(1, ...errors.flat());
   ctx.font = "11px system-ui";
-  for (const [j, key] of ["posterior", "iir", "sma"].entries()) {
+  for (const [j, key] of keys.entries()) {
     ctx.strokeStyle = palette[key];
     ctx.beginPath();
     errors.forEach((e, i) => {
@@ -292,8 +319,8 @@ function liveComparison(rows) {
       errors.reduce((s, e) => s + e[j] ** 2, 0) / errors.length,
     );
     ctx.fillText(
-      `${["KF", "IIR", "SMA"][j]} RMSE ${rmse.toFixed(2)}`,
-      40 + j * 150,
+      `${key === "posterior" ? "KF" : key === "observer" ? "Luenberger" : key.toUpperCase()} RMSE ${rmse.toFixed(2)}`,
+      40 + (j * (w - 50)) / keys.length,
       12,
     );
   }
