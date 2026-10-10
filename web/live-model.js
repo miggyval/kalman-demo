@@ -11,9 +11,11 @@
         damping: 2,
         mass: 1,
         ...AugmentedKF.defaults,
+        ...WindModel.defaults,
         estimateForce: false,
         ...parameters,
       };
+      this.wind = new WindModel.Generator(this.p);
       this.random = KalmanLab.generator(7);
       this.time = 0;
       this.k = 0;
@@ -84,6 +86,8 @@
           applied[j] += force.vector[j] / p.mass;
           if (force.known) known[j] += force.vector[j] / p.mass;
         }
+      const windTime = this.time,
+        wind = this.wind.sample(windTime);
       const prior = [],
         posterior = [],
         observations = [];
@@ -91,7 +95,11 @@
         p.scenario === "dropout" && this.time % 8 >= 4 && this.time % 8 < 6;
       for (let j = 0; j < 2; j++) {
         const previous = [this.truth[j], this.truth[j + 2]],
-          a = control[j] + applied[j] + p.processStd * this.normal();
+          a =
+            control[j] +
+            applied[j] +
+            wind.force[j] / p.mass +
+            p.processStd * this.normal();
         this.truth[j] = previous[0] + d * previous[1];
         this.truth[j + 2] = previous[1] + d * a;
         const raw = this.truth[j] + p.sensorStd * this.normal();
@@ -202,7 +210,11 @@
         missing,
         comparisons,
         augmented,
-        disturbanceForce: applied.map((v, j) => (v - known[j]) * p.mass),
+        wind,
+        windTime,
+        disturbanceForce: applied.map(
+          (v, j) => (v - known[j]) * p.mass + wind.force[j],
+        ),
         forceDrift: p.forceDrift,
         iir: this.iir.slice(),
         sma,

@@ -6,6 +6,7 @@ function restoreSettings() {
     ...AugmentedKF.defaults,
     ...TrailRenderer.defaults,
     ...PlotCamera.defaults,
+    ...WindModel.defaults,
     mass: 1,
     amplitude: 20,
     period: 6,
@@ -21,7 +22,10 @@ function restoreSettings() {
   };
   for (const [id, value] of Object.entries(defaults)) {
     const control = $(id);
-    if (control) control.value = String(value);
+    if (control) {
+      if (control.type === "checkbox") control.checked = Boolean(value);
+      else control.value = String(value);
+    }
   }
   for (const key of Object.keys(visible)) {
     visible[key] = true;
@@ -32,6 +36,10 @@ function restoreSettings() {
   $("trail-settings").open = false;
   trailLabels();
   cameraLabels();
+  $("wind-settings").open = false;
+  $("windCompareProfiles").checked = true;
+  $("windShowTurbulence").checked = false;
+  windLabels();
   $("estimateForce").checked = false;
   $("disturbance-settings").open = false;
   $("disturbance-panel").hidden = true;

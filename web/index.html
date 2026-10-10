@@ -49,14 +49,50 @@
           id="visibility"
           aria-label="Plot visibility"
         ></div>
-        <div id="camera-controls" class="camera-controls" hidden aria-label="Live plot view">
+        <div
+          id="camera-controls"
+          class="camera-controls"
+          hidden
+          aria-label="Live plot view"
+        >
           <button id="zoom-in" type="button" aria-label="Zoom in">+</button>
           <button id="zoom-out" type="button" aria-label="Zoom out">−</button>
-          <label>View span<input id="viewRange" type="range" min="5" max="150" step="0.1" value="25" /><output id="viewRange-value">50 m</output></label>
-          <label>Follow delay<input id="followLag" type="range" min="0" max="3" step="0.05" value="0.75" /><output id="followLag-value">0.75 s</output></label>
+          <label
+            >View span<input
+              id="viewRange"
+              type="range"
+              min="5"
+              max="150"
+              step="0.1"
+              value="25"
+            /><output id="viewRange-value">50 m</output></label
+          >
+          <label
+            >Follow delay<input
+              id="followLag"
+              type="range"
+              min="0"
+              max="3"
+              step="0.05"
+              value="0.75"
+            /><output id="followLag-value">0.75 s</output></label
+          >
+          <label
+            >Recenter duration<input
+              id="recenterDuration"
+              type="range"
+              min="0.2"
+              max="5"
+              step="0.1"
+              value="1.5"
+            /><output id="recenterDuration-value">1.50 s</output></label
+          >
           <button id="center-view" type="button">Centre now</button>
           <button id="reset-view" type="button">Reset view</button>
-          <small>Scroll or pinch the plot to zoom. Follows near the edge after the delay.</small>
+          <small
+            >Scroll or pinch the plot to zoom. Follows near the edge after the
+            delay.</small
+          >
         </div>
         <canvas
           id="state-plot"
@@ -312,6 +348,196 @@
             >Length and fade use simulation time. Live playback retains up to 8
             seconds. Colours follow the legend.</small
           >
+        </details>
+        <details id="wind-settings">
+          <summary>Wind / External Disturbances</summary>
+          <div class="wind-toolbar">
+            <label class="check"
+              ><input id="windEnabled" type="checkbox" /> Enable wind</label
+            >
+            <label
+              >Profile<select id="windProfile">
+                <option value="quintic">Quintic smoothstep</option>
+                <option value="normalized">Normalised tanh</option>
+                <option value="tanh">Original tanh</option>
+                <option value="first">First-order</option>
+                <option value="second">Critically damped second-order</option>
+                <option value="hard">Instantaneous step</option>
+              </select></label
+            >
+            <label
+              >Gust<select id="windMode">
+                <option value="step">Step and hold</option>
+                <option value="pulse">Rise, hold, return</option>
+              </select></label
+            >
+          </div>
+          <div class="wind-controls">
+            <label
+              >Onset [s]<input
+                id="windStart"
+                type="range"
+                min="0"
+                max="20"
+                step="0.25"
+                value="2"
+              /><output id="windStart-value">2</output></label
+            >
+            <label
+              >Transition [s]<input
+                id="windDuration"
+                type="range"
+                min="0.25"
+                max="5"
+                step="0.25"
+                value="2"
+              /><output id="windDuration-value">2</output></label
+            >
+            <label
+              >Hold [s]<input
+                id="windHold"
+                type="range"
+                min="0"
+                max="10"
+                step="0.25"
+                value="2"
+              /><output id="windHold-value">2</output></label
+            >
+            <label
+              >Gust amplitude [N]<input
+                id="windAmplitude"
+                type="range"
+                min="0"
+                max="60"
+                step="0.5"
+                value="3"
+              /><output id="windAmplitude-value">3</output></label
+            >
+            <label
+              >Direction [°]<input
+                id="windAngle"
+                type="range"
+                min="-180"
+                max="180"
+                step="5"
+                value="35"
+              /><output id="windAngle-value">35</output></label
+            >
+            <label
+              >Tanh a [s⁻¹]<input
+                id="windA"
+                type="range"
+                min="0.25"
+                max="8"
+                step="0.25"
+                value="2"
+              /><output id="windA-value">2</output></label
+            >
+            <label
+              >Tanh c [s]<input
+                id="windC"
+                type="range"
+                min="0.25"
+                max="4"
+                step="0.25"
+                value="1"
+              /><output id="windC-value">1</output></label
+            >
+            <label
+              >Mean Fx [N]<input
+                id="windMeanX"
+                type="range"
+                min="-30"
+                max="30"
+                step="0.5"
+                value="0.5"
+              /><output id="windMeanX-value">0.5</output></label
+            >
+            <label
+              >Mean Fy [N]<input
+                id="windMeanY"
+                type="range"
+                min="-30"
+                max="30"
+                step="0.5"
+                value="0"
+              /><output id="windMeanY-value">0</output></label
+            >
+            <label
+              >Turbulence [N]<input
+                id="windNoiseAmplitude"
+                type="range"
+                min="0"
+                max="20"
+                step="0.05"
+                value="0.65"
+              /><output id="windNoiseAmplitude-value">0.65</output></label
+            >
+            <label
+              >Variation rate [s⁻¹]<input
+                id="windRate"
+                type="range"
+                min="0.1"
+                max="3"
+                step="0.1"
+                value="0.8"
+              /><output id="windRate-value">0.8</output></label
+            >
+            <label
+              >Seed<input
+                id="windSeed"
+                type="range"
+                min="1"
+                max="999"
+                step="1"
+                value="12"
+              /><output id="windSeed-value">12</output></label
+            >
+          </div>
+          <div class="wind-toolbar">
+            <label class="check"
+              ><input id="windTurbulence" type="checkbox" checked /> Perlin
+              turbulence</label
+            >
+            <button id="wind-reseed" type="button">New seed</button>
+            <button id="wind-reset" type="button">Reset wind</button>
+          </div>
+          <small id="wind-policy"
+            >Live mode only. Wind parameter changes restart the run. Wind is an
+            unknown external force.</small
+          >
+          <p id="wind-profile-note"></p>
+          <div id="wind-plots">
+            <div class="wind-plot-heading">
+              <h2>Transition comparison</h2>
+              <label class="check"
+                ><input id="windCompareProfiles" type="checkbox" checked />
+                Other profiles</label
+              >
+            </div>
+            <canvas
+              id="wind-response"
+              aria-label="Six normalised gust profiles and simulation time cursor"
+            ></canvas>
+            <div id="wind-profile-legend" class="wind-legend"></div>
+            <div class="wind-plot-heading">
+              <h2>Wind force [N]</h2>
+              <label class="check"
+                ><input id="windShowTurbulence" type="checkbox" /> Turbulence
+                separately</label
+              >
+            </div>
+            <canvas
+              id="wind-history"
+              aria-label="Actual wind force components and optional turbulence against simulation time"
+            ></canvas>
+            <div class="wind-legend">
+              <span class="wind">Fx — solid</span
+              ><span class="observer">Fy — solid</span
+              ><span>Turbulence — dashed</span>
+            </div>
+            <output id="wind-vector"></output>
+          </div>
         </details>
         <details id="disturbance-settings">
           <summary>Disturbance force estimator · live mode</summary>
@@ -597,6 +823,7 @@
     <script src="filters.js"></script>
     <script src="model.js"></script>
     <script src="augmented-model.js"></script>
+    <script src="wind.js"></script>
     <script src="live-model.js"></script>
     <script src="trails.js"></script>
     <script src="camera.js"></script>
@@ -607,6 +834,7 @@
     <script src="disturbance-ui.js"></script>
     <script src="trail-ui.js"></script>
     <script src="camera-ui.js"></script>
+    <script src="wind-ui.js"></script>
     <script src="theme.js"></script>
     <script src="settings.js"></script>
   </body>

@@ -2,6 +2,7 @@ const assert = require("node:assert/strict");
 global.KalmanLab = require("../web/model");
 global.FilterComparison = require("../web/filters");
 global.AugmentedKF = require("../web/augmented-model");
+global.WindModel = require("../web/wind.js");
 const Live = require("../web/live-model");
 const p = {
   processStd: 0,

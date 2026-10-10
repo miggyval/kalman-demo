@@ -19,3 +19,5 @@ jobs:
       - run: node tests/filters.test.js
       - run: node tests/augmented-model.test.js
       - run: node tests/trails.test.js
+      - run: node tests/camera.test.js
+      - run: node tests/wind.test.js

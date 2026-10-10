@@ -14,7 +14,8 @@ const elements = {};
 function element(id = "") {
   return {
     id,
-    min:"",max:"",
+    min: "",
+    max: "",
     dataset: {},
     style: {},
     hidden: false,
@@ -52,18 +53,21 @@ for (const match of html.matchAll(/<[^>]*\bid="([^"]+)"[^>]*>/g)) {
   const e = element(match[1]);
   elements[e.id] = e;
   e.value = match[0].match(/\bvalue="([^"]+)"/)?.[1] || "";
-  e.min=match[0].match(/\bmin="([^"]+)"/)?.[1] || "";
-  e.max=match[0].match(/\bmax="([^"]+)"/)?.[1] || "";
+  e.min = match[0].match(/\bmin="([^"]+)"/)?.[1] || "";
+  e.max = match[0].match(/\bmax="([^"]+)"/)?.[1] || "";
   e.type = match[0].match(/\btype="([^"]+)"/)?.[1] || "";
   e.checked = /\bchecked\b/.test(match[0]);
   e.hidden = /\bhidden\b/.test(match[0]);
 }
+elements.windProfile.value = "quintic";
+elements.windMode.value = "step";
 elements.scenario.value = "normal";
 elements.speed.value = "1";
 const context = vm.createContext({
   KalmanLab: Lab,
   TrailRenderer: require("../web/trails.js"),
   PlotCamera: require("../web/camera.js"),
+  WindModel: require("../web/wind.js"),
   Event: class {
     constructor(type) {
       this.type = type;
@@ -326,6 +330,88 @@ console.log(
 );
 
 vm.runInContext(fs.readFileSync("web/camera-ui.js", "utf8"), context);
+vm.runInContext(fs.readFileSync("web/wind-ui.js", "utf8"), context);
+elements["demo-mode"].value = "live";
+elements["demo-mode"].onchange();
+const cameraTime = run("live.time"),
+  rangeBefore = +elements.viewRange.value;
+elements["zoom-in"].onclick();
+assert.ok(+elements.viewRange.value < rangeBefore);
+assert.equal(run("live.time"), cameraTime);
+let wheelPrevented = false;
+elements["state-plot"].wheel({
+  deltaY: 100,
+  deltaMode: 0,
+  preventDefault() {
+    wheelPrevented = true;
+  },
+});
+assert.ok(wheelPrevented);
+const forcesBeforePinch = run("live.forces.length");
+elements["state-plot"].pointerdown({
+  pointerType: "touch",
+  pointerId: 1,
+  clientX: 200,
+  clientY: 150,
+});
+elements["state-plot"].pointerdown({
+  pointerType: "touch",
+  pointerId: 2,
+  clientX: 400,
+  clientY: 150,
+});
+const beforePinch = +elements.viewRange.value;
+elements["state-plot"].pointermove({
+  pointerId: 2,
+  clientX: 500,
+  clientY: 150,
+});
+assert.ok(+elements.viewRange.value < beforePinch);
+elements["state-plot"].pointerup({ pointerId: 1 });
+elements["state-plot"].pointerup({ pointerId: 2 });
+assert.equal(
+  run("live.forces.length"),
+  forcesBeforePinch,
+  "pinching never applies a force",
+);
+elements["reset-view"].onclick();
+assert.equal(elements.viewRange.value, "25");
+console.log("Camera UI: zoom, wheel, pinch isolation and reset passed");
+elements["wind-settings"].open = true;
+elements.windEnabled.checked = true;
+elements.windEnabled.change();
+assert.equal(
+  run("live.k"),
+  1,
+  "wind configuration restarts a coherent experiment",
+);
+elements.windProfile.value = "normalized";
+elements.windProfile.change();
+assert.equal(elements.windA.disabled, false);
+assert.equal(elements.windDuration.disabled, true);
+elements.windMode.value = "pulse";
+elements.windMode.change();
+assert.equal(elements.windHold.disabled, false);
+assert.equal(elements.windDuration.disabled, false);
+elements.windAngle.value = "-90";
+elements.windAngle.input();
+assert.equal(run("live.wind.p.windAngle"), -90);
+assert.equal(run("live.p.windEnabled"), true);
+const previousSeed = +elements.windSeed.value;
+elements["wind-reseed"].onclick();
+assert.equal(+elements.windSeed.value, previousSeed + 1);
+elements.windShowTurbulence.checked = true;
+elements.windShowTurbulence.change();
+run("draw()");
+assert.match(elements["wind-vector"].textContent, /Fx.*N.*Fy/);
+elements["demo-mode"].value = "staged";
+elements["demo-mode"].onchange();
+assert.equal(elements.windEnabled.disabled, true);
+elements["demo-mode"].value = "live";
+elements["demo-mode"].onchange();
+console.log(
+  "Wind UI: profile relevance, pulse settings, parameter restart, seed, plots and mode handling passed",
+);
 vm.runInContext(fs.readFileSync("web/settings.js", "utf8"), context);
 elements.mass.value = "3";
 elements["reset-settings"].onclick();
@@ -358,3 +444,7 @@ assert.equal(elements.limitTrail.checked, false);
 assert.equal(elements.fadeTrail.checked, false);
 assert.equal(elements.trailStyle.value, "auto");
 assert.equal(elements.trailWidth.value, "1");
+
+assert.equal(elements.windEnabled.checked, false);
+assert.equal(run("live.p.windEnabled"), false);
+assert.equal(elements.recenterDuration.value, "1.5");

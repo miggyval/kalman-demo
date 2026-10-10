@@ -74,6 +74,36 @@ Changing comparison settings resets only the edited filter's memory in live mode
 
 Choose **By series** to keep the existing solid/dashed distinction, or apply Solid, Dashed, Dotted, or Dash-dot to all trails. Sliders adjust thickness, dash length, and gap in CSS pixels. Colours remain tied to the legend. These controls change drawing only; they do not restart the simulation or affect estimates, covariance ellipses, force arrows, or error plots. Reset settings restores unlimited retained history, no fade, By series, 1 px thickness, and 4 px dashes/gaps.
 
+**Live plot view** uses fixed zoom. View span is twice the smaller-axis half-range; the other axis expands to preserve equal metres per pixel. Use +/−, the span slider, scroll/trackpad pinch, or a two-finger touch pinch over the plot. Pinching never applies a click force. The view stays still until the true object crosses 70% of an axis half-range, waits for **Follow delay**, then recentres over **Recenter duration** with quintic scaling `6u⁵ − 15u⁴ + 10u³`. Each move interpolates between fixed endpoints, so its velocity and acceleration are zero at both ends; the destination is the object's position when that move starts. A moving object can trigger a later move. Pause freezes following along with simulation time. Centre now is immediate; Reset view restores the initial centre and default 50 m smaller-axis span. Outlying filter estimates no longer change zoom.
+
+**Wind / External Disturbances** adds a 2D external force to live physics. Enable wind, choose a transition and Step and hold or Rise, hold, return, then configure the mean forces, gust vector, and optional seeded Perlin turbulence. Wind parameter edits restart the run with the chosen configuration and preserve play/pause; display-only toggles keep the run. Wind is off by default. The standalone reference is integrated into the existing controls and canvas plots, with no additional dependencies.
+
+```text
+Fwind(t) = [meanX, meanY] + amplitude * shape(t) * [cos(angle), sin(angle)]
+           + noiseAmplitude * [Perlin(rate*t, seed), Perlin(rate*t, seed+313)]
+m p̈ = Fcontrol − b ṗ + Fwind + Fclicked_unknown + acceleration noise * m
+b = mass * damping                  # damping slider remains in s⁻¹
+```
+
+Positive angles rotate counterclockwise from +x towards +y. Wind is a force, not an air velocity or drag model. The existing periodic controller, gravity, known click inputs and damping remain the aggregate known acceleration used by the filters. Damping is applied once; its equivalent viscous coefficient is `b = m*damping`. The standard KF retains its four-state model and Q/R. The augmented KF retains its six-state random-walk force model; wind is never copied into that estimate or passed as a known input. Its actual-force reference includes wind plus any unknown click forces. The simulation's aggregate known acceleration is available exactly to all model-based filters, including its damping component; this remains an idealised teaching assumption.
+
+![Integrated wind controls and force history](docs/browser-wind.png)
+
+For elapsed `s = t − onset`, the transition profiles are zero before onset:
+
+| Profile | Transition for s ≥ 0 |
+| --- | --- |
+| Instantaneous | 1 |
+| First-order | `1 − exp(−3s/T)` |
+| Critical second-order | `1 − (1+z) exp(−z)`, `z = 4.75s/T` |
+| Original tanh | `(1 + tanh(a(s−c)))/2`, with an onset jump |
+| Normalised tanh | `[tanh(a(s−c)) + tanh(ac)]/[1 + tanh(ac)]`, exactly zero at s ≤ 0 |
+| Quintic | `6u⁵ − 15u⁴ + 10u³` for `0 < u=s/T < 1`, then exactly 1 |
+
+First/second order reach approximately 95% at T; tanh uses a and c. Only quintic reaches an exact finite plateau smoothly. Pulse mode subtracts a copy delayed by `T + hold` from the rising response; its return starts at `onset + T + hold`. T therefore controls pulse timing even for tanh and instantaneous profiles. Independent seeded gradient sequences use quintic interpolation; the amplitude scales the reference prototype's gradient-noise output rather than prescribing its RMS or exact peak. No random values are generated during rendering, and arbitrary-time queries are reproducible.
+
+The transition plot highlights the selected profile and can hide the others. Wind history uses the actual stored forces applied at the **start** of each Euler interval, labelled with `windTime`; the resulting state has timestamp `windTime + dt`. Both wind plots show that sample's time cursor. Turbulence-only components can be drawn dashed. The physical plot draws the actual wind arrow in green at 0.2 m/N; estimated net disturbance stays cyan. The existing augmented-force panel shows actual versus estimated X/Y and uncertainty. Live playback retains eight seconds, while the response plot previews the configured pulse/step. Wind controls are disabled in the staged height/velocity view.
+
 The mathematics is rendered with [KaTeX](https://katex.org/docs/browser.html), version 0.19.0. Its MIT licence is preserved in `web/vendor/katex/LICENSE`.
 
 ## Python interactive demo
@@ -143,6 +173,8 @@ node tests/live-model.test.js
 node tests/filters.test.js
 node tests/augmented-model.test.js
 node tests/trails.test.js
+node tests/camera.test.js
+node tests/wind.test.js
 ```
 
 Tests cover repeatability, tracking error, known acceleration, the SMA window, IIR initialization, zero noise, covariance stability under bursts, Euler dynamics, Joseph updates, eigenvalue ellipses, stored playback, LaTeX rendering, visibility toggles, parameter changes, and missing measurements.

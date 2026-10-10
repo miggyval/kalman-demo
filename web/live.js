@@ -55,7 +55,7 @@ function liveParameters(resetInitial = false) {
   else liveDraw();
   sliderValues();
 }
-const liveCamera=new PlotCamera.Camera();
+const liveCamera = new PlotCamera.Camera();
 function liveReset() {
   const p = typeof filterSettings === "function" ? filterSettings() : {};
   for (const id of parameterIds) p[id] = +$(id).value;
@@ -63,6 +63,7 @@ function liveReset() {
     p[id] = +$(id).value;
   if (typeof disturbanceSettings === "function")
     Object.assign(p, disturbanceSettings());
+  if (typeof windSettings === "function") Object.assign(p, windSettings());
   p.matched = $("matched").checked;
   p.scenario = $("scenario").value;
   live = new LiveSimulation(p);
@@ -102,9 +103,18 @@ function liveDraw() {
     top = 20,
     right = 15,
     bottom = 40;
-  const half=+$('viewRange').value;
-  const aspect=(w-left-right)/(h-top-bottom),hx=half*Math.max(1,aspect),hy=half*Math.max(1,1/aspect);
-  const center=liveCamera.update(row.truth,hx,hy,row.time,+$('followLag').value);
+  const half = +$("viewRange").value;
+  const aspect = (w - left - right) / (h - top - bottom),
+    hx = half * Math.max(1, aspect),
+    hy = half * Math.max(1, 1 / aspect);
+  const center = liveCamera.update(
+    row.truth,
+    hx,
+    hy,
+    row.time,
+    +$("followLag").value,
+    +$("recenterDuration").value,
+  );
   liveBounds = {
     xmin: center[0] - hx,
     xmax: center[0] + hx,
@@ -230,6 +240,12 @@ function liveDraw() {
         palette.augmented,
       );
   }
+  if (visible.arrows && row.wind && live.p.windEnabled)
+    arrow(
+      row.truth,
+      row.truth.slice(0, 2).map((v, j) => v + row.wind.force[j] * 0.2),
+      palette.wind,
+    );
   if (visible.measurement)
     for (const r of history.slice(-80))
       if (!r.missing) {
@@ -298,6 +314,7 @@ function liveDraw() {
   $("play").textContent = livePlaying ? "Pause" : "Play";
   if (!$("comparison").hidden) liveComparison(history);
   if (typeof drawDisturbance === "function") drawDisturbance(history, row);
+  if (typeof drawWind === "function") drawWind(history, row);
 }
 function liveComparison(rows) {
   const { ctx, w, h } = canvasSetup($("comparison"));
@@ -409,9 +426,9 @@ function applyPlotForce(event) {
   );
   liveDraw();
 }
-$("state-plot").addEventListener("pointerdown",event=>{
-  if(demoMode!=="live")return;
-  if(event.pointerType==="touch")cameraTouchStart(event);
+$("state-plot").addEventListener("pointerdown", (event) => {
+  if (demoMode !== "live") return;
+  if (event.pointerType === "touch") cameraTouchStart(event);
   else applyPlotForce(event);
 });
 $("clear-forces").onclick = () => {
@@ -429,7 +446,7 @@ $("demo-mode").onchange = () => {
   demoMode = $("demo-mode").value;
   document.body.classList.toggle("live", demoMode === "live");
   $("live-controls").hidden = demoMode !== "live";
-  $("camera-controls").hidden=demoMode!=="live";
+  $("camera-controls").hidden = demoMode !== "live";
   $("scenario").options[1].textContent =
     demoMode === "live" ? "Gap: 4–6 s every 8 s" : "Gap: k = 11–15";
   $("scenario").options[2].textContent =
@@ -449,6 +466,7 @@ $("demo-mode").onchange = () => {
     regenerate();
   }
   if (typeof disturbanceMode === "function") disturbanceMode();
+  if (typeof windLabels === "function") windLabels();
   sliderValues();
 };
 $("demo-mode").onchange();

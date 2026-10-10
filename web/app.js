@@ -11,6 +11,7 @@ const palette = {
   fir: "#7bbfac",
   observer: "#ef8faa",
   augmented: "#69d4dc",
+  wind: "#b0d477",
   grid: "#332c3c",
   muted: "#b4aabb",
   border: "#63556f",
