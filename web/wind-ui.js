@@ -2,6 +2,7 @@
 const windIds = Object.keys(WindModel.defaults),
   windUnits = {
     windStart: "s",
+    windInterval: "s",
     windDuration: "s",
     windHold: "s",
     windAmplitude: "N",
@@ -39,6 +40,15 @@ function windLabels() {
     $(id + "-value").textContent =
       (id === "windSeed" ? p[id].toFixed(0) : p[id].toFixed(2)) +
       (unit ? " " + unit : "");
+  $("windRepeat").disabled = !isLive || p.windMode !== "pulse";
+  $("windInterval").disabled =
+    !isLive || p.windMode !== "pulse" || !p.windRepeat;
+  $("wind-trigger").disabled = !isLive;
+  const interval = Math.max(p.windInterval, 2 * p.windDuration + p.windHold);
+  $("wind-schedule").textContent =
+    p.windMode === "pulse" && p.windRepeat
+      ? `Repeats every ${interval.toFixed(2)} simulation seconds (at least two transitions plus hold).`
+      : "One gust at onset after reset. Start gust now restarts the gust at the current simulation time.";
   $("windHold").disabled = !isLive || p.windMode !== "pulse";
   for (const id of ["windA", "windC"]) $(id).disabled = !isLive || !tanh;
   $("windDuration").disabled =
@@ -72,6 +82,14 @@ for (const id of windIds)
     $(id).type === "range" ? "input" : "change",
     configureWind,
   );
+$("wind-trigger").onclick = () => {
+  if (demoMode !== "live") return;
+  $("windEnabled").checked = true;
+  live.p.windEnabled = live.wind.p.windEnabled = true;
+  live.wind.trigger(live.time);
+  windLabels();
+  liveDraw();
+};
 $("wind-reseed").onclick = () => {
   $("windSeed").value = String((+$("windSeed").value % 999) + 1);
   configureWind();
@@ -165,7 +183,7 @@ function windLine(ax, samples, color, width = 2, dash = [], alpha = 1) {
 }
 function drawWind(history, row) {
   if (!$("wind-settings").open) return;
-  const p = live.p,
+  const p = live.wind.parametersAt(row.windTime),
     cursor = row.windTime;
   const horizon = Math.max(
     14,

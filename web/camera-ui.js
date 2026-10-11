@@ -28,12 +28,14 @@ $("zoom-in").onclick = () => setViewRange(+$("viewRange").value / 1.2);
 $("zoom-out").onclick = () => setViewRange(+$("viewRange").value * 1.2);
 $("center-view").onclick = () => {
   if (demoMode === "live") {
+    $("follow-object").checked = true;
     liveCamera.reset(live.history[liveCursor].truth);
     draw();
   }
 };
 $("reset-view").onclick = () => {
   if (demoMode === "live") {
+    $("follow-object").checked = true;
     liveCamera.reset(live.origin);
     setViewRange(PlotCamera.defaults.viewRange);
   }
@@ -54,13 +56,25 @@ $("state-plot").addEventListener(
   { passive: false },
 );
 const cameraTouches = new Map();
-let pinchDistance = 0,
+let panStart = null,
+  dragged = false,
+  pinchDistance = 0,
   pinchRange = 0,
   pinchUsed = false;
 function cameraTouchStart(event) {
+  if (event.button !== undefined && event.button !== 0) return;
   cameraTouches.set(event.pointerId, [event.clientX, event.clientY]);
   $("state-plot").setPointerCapture(event.pointerId);
-  if (cameraTouches.size === 1) pinchUsed = false;
+  if (cameraTouches.size === 1) {
+    pinchUsed = false;
+    dragged = false;
+    panStart = {
+      x: event.clientX,
+      y: event.clientY,
+      center: [...liveCamera.center],
+      bounds: { ...liveBounds },
+    };
+  }
   if (cameraTouches.size === 2) {
     pinchUsed = true;
     const [a, b] = [...cameraTouches.values()];
@@ -69,8 +83,22 @@ function cameraTouchStart(event) {
   }
 }
 $("state-plot").addEventListener("pointermove", (event) => {
-  if (!cameraTouches.has(event.pointerId)) return;
+  if (demoMode !== "live" || !cameraTouches.has(event.pointerId)) return;
   cameraTouches.set(event.pointerId, [event.clientX, event.clientY]);
+  if (cameraTouches.size === 1 && !pinchUsed && panStart) {
+    const dx = event.clientX - panStart.x,
+      dy = event.clientY - panStart.y;
+    if (Math.hypot(dx, dy) > 5) dragged = true;
+    if (dragged) {
+      $("follow-object").checked = false;
+      const b = panStart.bounds;
+      liveCamera.reset([
+        panStart.center[0] - (dx * (b.xmax - b.xmin)) / b.pw,
+        panStart.center[1] + (dy * (b.ymax - b.ymin)) / b.ph,
+      ]);
+      draw();
+    }
+  }
   if (cameraTouches.size === 2 && pinchDistance > 0) {
     const [a, b] = [...cameraTouches.values()],
       distance = Math.hypot(a[0] - b[0], a[1] - b[1]);
@@ -79,7 +107,8 @@ $("state-plot").addEventListener("pointermove", (event) => {
 });
 function endCameraTouch(event, cancelled = false) {
   if (!cameraTouches.has(event.pointerId)) return;
-  if (!pinchUsed && !cancelled && demoMode === "live") applyPlotForce(event);
+  if (!pinchUsed && !dragged && !cancelled && demoMode === "live")
+    applyPlotForce(event);
   cameraTouches.delete(event.pointerId);
   if (cameraTouches.size < 2) pinchDistance = 0;
 }
@@ -91,3 +120,8 @@ $("state-plot").addEventListener("lostpointercapture", (event) =>
   endCameraTouch(event, true),
 );
 cameraLabels();
+
+$("follow-object").addEventListener("change", () => {
+  liveCamera.reset(liveCamera.center);
+  draw();
+});

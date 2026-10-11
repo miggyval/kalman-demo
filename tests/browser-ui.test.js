@@ -143,6 +143,7 @@ vm.runInContext(fs.readFileSync("web/live-model.js", "utf8"), context);
 context.LiveSimulation = context.window.LiveSimulation;
 elements["demo-mode"].value = "live";
 vm.runInContext(fs.readFileSync("web/live.js", "utf8"), context);
+vm.runInContext(fs.readFileSync("web/camera-ui.js", "utf8"), context);
 assert.equal(run("demoMode"), "live");
 for (let i = 0; i < 51; i++) run("liveAnimate(" + i * 20 + ")");
 assert.ok(Math.abs(run("live.time") - 1.02) < 1e-9, "1x wall-clock playback");
@@ -151,7 +152,12 @@ const pausedTime = run("live.time");
 run("liveAnimate(2000)");
 assert.equal(run("live.time"), pausedTime);
 elements["force-type"].value = "known";
-elements["state-plot"].pointerdown({ clientX: 500, clientY: 150 });
+elements["state-plot"].pointerdown({
+  pointerId: 4,
+  clientX: 500,
+  clientY: 150,
+});
+elements["state-plot"].pointerup({ pointerId: 4, clientX: 500, clientY: 150 });
 assert.equal(run("live.forces.length"), 1);
 assert.equal(run("live.forces[0].known"), true);
 elements.next.onclick();
@@ -329,7 +335,6 @@ console.log(
   "Trail UI: length, fade, style, thickness, live and staged drawing passed",
 );
 
-vm.runInContext(fs.readFileSync("web/camera-ui.js", "utf8"), context);
 vm.runInContext(fs.readFileSync("web/wind-ui.js", "utf8"), context);
 elements["demo-mode"].value = "live";
 elements["demo-mode"].onchange();
@@ -448,3 +453,43 @@ assert.equal(elements.trailWidth.value, "1");
 assert.equal(elements.windEnabled.checked, false);
 assert.equal(run("live.p.windEnabled"), false);
 assert.equal(elements.recenterDuration.value, "1.5");
+
+// Manual pan moves only the camera and never applies force.
+elements["demo-mode"].value = "live";
+elements["demo-mode"].onchange();
+elements["center-view"].onclick();
+const panTime = run("live.time"),
+  panForceCount = run("live.forces.length"),
+  panX = run("liveCamera.center[0]");
+elements["state-plot"].pointerdown({
+  pointerId: 9,
+  clientX: 300,
+  clientY: 200,
+});
+elements["state-plot"].pointermove({
+  pointerId: 9,
+  clientX: 400,
+  clientY: 230,
+});
+elements["state-plot"].pointerup({ pointerId: 9, clientX: 400, clientY: 230 });
+assert.ok(run("liveCamera.center[0]") < panX);
+assert.equal(elements["follow-object"].checked, false);
+assert.equal(run("live.forces.length"), panForceCount);
+assert.equal(run("live.time"), panTime);
+elements["center-view"].onclick();
+assert.equal(elements["follow-object"].checked, true);
+// Trigger at current time without clearing history, including while paused.
+elements.play.onclick();
+const triggerTime = run("live.time"),
+  triggerHistory = run("live.history.length");
+elements["wind-trigger"].onclick();
+assert.equal(run("live.time"), triggerTime);
+assert.equal(run("live.history.length"), triggerHistory);
+assert.equal(run("livePlaying"), false);
+assert.equal(run("live.wind.parametersAt(live.time).windStart"), triggerTime);
+assert.equal(run("live.wind.p.windEnabled"), true);
+run("liveAnimate(50000);liveAnimate(51000)");
+assert.equal(run("live.time"), triggerTime);
+console.log(
+  "Pan, force-click isolation, gust trigger and paused playback passed",
+);

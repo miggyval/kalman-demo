@@ -795,6 +795,15 @@ header > span,
 .camera-controls input {
   width: 95px;
 }
+.camera-controls input[type="checkbox"] {
+  width: auto;
+}
+body.live #state-plot {
+  cursor: grab;
+}
+body.live #state-plot:active {
+  cursor: grabbing;
+}
 .camera-controls small {
   flex-basis: 100%;
   color: var(--muted);

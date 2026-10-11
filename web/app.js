@@ -646,7 +646,7 @@ document.addEventListener("keydown", (e) => {
 });
 regenerate();
 function animate(now) {
-  if (playing) {
+  if (playing && demoMode === "staged") {
     if (previousTime !== undefined) {
       let remaining =
         Math.min(0.25, (now - previousTime) / 1000) * +$("speed").value;

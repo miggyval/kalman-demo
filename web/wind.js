@@ -7,6 +7,8 @@
     windStart: 2,
     windDuration: 2,
     windHold: 2,
+    windRepeat: false,
+    windInterval: 10,
     windA: 2,
     windC: 1,
     windAmplitude: 3,
@@ -45,10 +47,23 @@
     return smooth(s / p.windDuration);
   }
   function shape(t, p, id = p.windProfile) {
-    const rise = response(id, t - p.windStart, p);
-    return p.windMode === "pulse"
-      ? rise - response(id, t - p.windStart - p.windDuration - p.windHold, p)
-      : rise;
+    const pulse = (elapsed) =>
+      response(id, elapsed, p) -
+      response(id, elapsed - p.windDuration - p.windHold, p);
+    const elapsed = t - p.windStart;
+    if (p.windMode !== "pulse") return response(id, elapsed, p);
+    if (!p.windRepeat || elapsed < 0) return pulse(elapsed);
+    const interval = Math.max(p.windInterval, 2 * p.windDuration + p.windHold);
+    // Keep the asymptotic tails until they are below floating-point precision.
+    const tail = Math.max(
+      16 * p.windDuration + p.windHold,
+      20 / p.windA + p.windC + p.windDuration + p.windHold,
+    );
+    const last = Math.floor(elapsed / interval);
+    const first = Math.max(0, Math.ceil((elapsed - tail) / interval));
+    let level = 0;
+    for (let k = first; k <= last; k++) level += pulse(elapsed - k * interval);
+    return level;
   }
   function hash(n, seed) {
     let x = Math.imul(n + Math.imul(seed, 374761393), 668265263);
@@ -66,9 +81,17 @@
   class Generator {
     constructor(p = {}) {
       this.p = { ...defaults, ...p };
+      this.starts = [{ time: -Infinity, start: this.p.windStart }];
+    }
+    trigger(time) {
+      this.starts.push({ time, start: time });
+    }
+    parametersAt(time) {
+      const epoch = this.starts.findLast((entry) => entry.time <= time);
+      return { ...this.p, windStart: epoch.start };
     }
     sample(time) {
-      const p = this.p;
+      const p = this.parametersAt(time);
       if (!p.windEnabled)
         return { force: [0, 0], gust: [0, 0], turbulence: [0, 0], shape: 0 };
       const level = shape(time, p),

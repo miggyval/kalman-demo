@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>METR6203 · Kalman filter</title>
     <link rel="stylesheet" href="vendor/katex/katex.min.css" />
-    <link rel="stylesheet" href="style.css" />
+    <link rel="stylesheet" href="style.css?v=20261011" />
   </head>
   <body>
     <header>
@@ -87,11 +87,15 @@
               value="1.5"
             /><output id="recenterDuration-value">1.50 s</output></label
           >
+          <label class="check"
+            ><input id="follow-object" type="checkbox" checked /> Follow
+            object</label
+          >
           <button id="center-view" type="button">Centre now</button>
           <button id="reset-view" type="button">Reset view</button>
           <small
-            >Scroll or pinch the plot to zoom. Follows near the edge after the
-            delay.</small
+            >Drag to pan; click to apply force. Scroll or pinch to zoom.
+            Following waits near the edge.</small
           >
         </div>
         <canvas
@@ -502,9 +506,29 @@
             <button id="wind-reseed" type="button">New seed</button>
             <button id="wind-reset" type="button">Reset wind</button>
           </div>
+          <div class="wind-toolbar">
+            <button id="wind-trigger" type="button">Start gust now</button>
+            <label class="check"
+              ><input id="windRepeat" type="checkbox" /> Repeat finite
+              gust</label
+            >
+            <label
+              >Repeat interval [s]<input
+                id="windInterval"
+                type="range"
+                min="1"
+                max="60"
+                step="0.25"
+                value="10"
+              /><output id="windInterval-value">10 s</output></label
+            >
+          </div>
+          <small id="wind-schedule"></small>
           <small id="wind-policy"
             >Live mode only. Wind parameter changes restart the run. Wind is an
-            unknown external force.</small
+            unknown external force. Start gust now enables wind without
+            restarting the run; while paused it starts when playback
+            resumes.</small
           >
           <p id="wind-profile-note"></p>
           <div id="wind-plots">
@@ -820,22 +844,22 @@
       </div>
     </dialog>
     <script src="vendor/katex/katex.min.js"></script>
-    <script src="filters.js"></script>
-    <script src="model.js"></script>
-    <script src="augmented-model.js"></script>
-    <script src="wind.js"></script>
-    <script src="live-model.js"></script>
-    <script src="trails.js"></script>
-    <script src="camera.js"></script>
-    <script src="app.js"></script>
-    <script src="live.js"></script>
-    <script src="filter-ui.js"></script>
-    <script src="pole-ui.js"></script>
-    <script src="disturbance-ui.js"></script>
-    <script src="trail-ui.js"></script>
-    <script src="camera-ui.js"></script>
-    <script src="wind-ui.js"></script>
-    <script src="theme.js"></script>
-    <script src="settings.js"></script>
+    <script src="filters.js?v=20261011"></script>
+    <script src="model.js?v=20261011"></script>
+    <script src="augmented-model.js?v=20261011"></script>
+    <script src="wind.js?v=20261011"></script>
+    <script src="live-model.js?v=20261011"></script>
+    <script src="trails.js?v=20261011"></script>
+    <script src="camera.js?v=20261011"></script>
+    <script src="app.js?v=20261011"></script>
+    <script src="live.js?v=20261011"></script>
+    <script src="filter-ui.js?v=20261011"></script>
+    <script src="pole-ui.js?v=20261011"></script>
+    <script src="disturbance-ui.js?v=20261011"></script>
+    <script src="trail-ui.js?v=20261011"></script>
+    <script src="camera-ui.js?v=20261011"></script>
+    <script src="wind-ui.js?v=20261011"></script>
+    <script src="theme.js?v=20261011"></script>
+    <script src="settings.js?v=20261011"></script>
   </body>
 </html>

@@ -107,14 +107,16 @@ function liveDraw() {
   const aspect = (w - left - right) / (h - top - bottom),
     hx = half * Math.max(1, aspect),
     hy = half * Math.max(1, 1 / aspect);
-  const center = liveCamera.update(
-    row.truth,
-    hx,
-    hy,
-    row.time,
-    +$("followLag").value,
-    +$("recenterDuration").value,
-  );
+  const center = $("follow-object").checked
+    ? liveCamera.update(
+        row.truth,
+        hx,
+        hy,
+        row.time,
+        +$("followLag").value,
+        +$("recenterDuration").value,
+      )
+    : liveCamera.center;
   liveBounds = {
     xmin: center[0] - hx,
     xmax: center[0] + hx,
@@ -375,6 +377,8 @@ for (const id of ["play", "previous", "next", "reset", "outlier"])
     }
     if (id === "play") {
       livePlaying = !livePlaying;
+      stop();
+      liveDebt = 0;
       liveLast = undefined;
       if (livePlaying) liveCursor = live.history.length - 1;
     }
@@ -428,8 +432,7 @@ function applyPlotForce(event) {
 }
 $("state-plot").addEventListener("pointerdown", (event) => {
   if (demoMode !== "live") return;
-  if (event.pointerType === "touch") cameraTouchStart(event);
-  else applyPlotForce(event);
+  cameraTouchStart(event);
 });
 $("clear-forces").onclick = () => {
   live.forces = [];

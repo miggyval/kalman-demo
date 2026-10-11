@@ -7,6 +7,7 @@ function restoreSettings() {
     ...TrailRenderer.defaults,
     ...PlotCamera.defaults,
     ...WindModel.defaults,
+    "follow-object": true,
     mass: 1,
     amplitude: 20,
     period: 6,

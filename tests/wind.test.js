@@ -131,3 +131,22 @@ assert.ok(
 console.log(
   "Wind: six profiles, pulse, quintic smoothness, normalised tanh, negative directions, deterministic Perlin, dynamics, damping and augmented comparison passed",
 );
+
+const repeated = { ...pulse, windRepeat: true, windInterval: 10 };
+for (const t of [2, 3, 4, 6, 7, 8, 9]) {
+  assert.ok(Math.abs(W.shape(t, repeated) - W.shape(t + 10, repeated)) < 1e-12);
+}
+assert.equal(W.shape(1000002, repeated), 0);
+assert.equal(W.shape(1000004, repeated), 1);
+const close = { ...repeated, windInterval: 1 };
+assert.equal(W.shape(9, close), 0.5); // minimum period = 2T + H = 6 s
+const triggered = new W.Generator(repeated);
+const before = triggered.sample(5);
+triggered.trigger(12);
+assert.deepEqual(triggered.sample(5), before);
+assert.equal(triggered.sample(12).shape, 0);
+assert.equal(triggered.sample(14).shape, 1);
+assert.equal(triggered.sample(24).shape, 1);
+console.log(
+  "Periodic gusts, minimum interval, long-run sampling and trigger history passed",
+);
